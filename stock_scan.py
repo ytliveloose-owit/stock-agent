@@ -21,11 +21,12 @@ cli = jquantsapi.ClientV2()
 
 # ==========================
 # 取得期間
+# BB・RSI計算のため60日取得
 # ==========================
 
 today = datetime.now()
 
-start_dt = today - timedelta(days=10)
+start_dt = today - timedelta(days=60)
 end_dt = today - timedelta(days=1)
 
 
@@ -38,10 +39,6 @@ df = cli.get_eq_bars_daily_range(
     end_dt=end_dt
 )
 
-
-# ==========================
-# 日付順
-# ==========================
 
 df = df.sort_values(
     ["Code", "Date"]
@@ -94,6 +91,82 @@ df["TradingValue"] = (
 
 
 # ==========================
+# ボリンジャーバンド
+# 20日 ±2σ
+# ==========================
+
+df["BB_MA20"] = (
+    df.groupby("Code")["AdjC"]
+    .transform(
+        lambda x:
+        x.shift(1)
+        .rolling(20)
+        .mean()
+    )
+)
+
+
+df["BB_STD20"] = (
+    df.groupby("Code")["AdjC"]
+    .transform(
+        lambda x:
+        x.shift(1)
+        .rolling(20)
+        .std()
+    )
+)
+
+
+df["BB_Lower"] = (
+    df["BB_MA20"]
+    - df["BB_STD20"] * 2
+)
+
+
+# ==========================
+# RSI 14日
+# ==========================
+
+def calc_rsi(series, period=14):
+
+    delta = series.diff()
+
+    gain = delta.where(
+        delta > 0,
+        0
+    )
+
+    loss = -delta.where(
+        delta < 0,
+        0
+    )
+
+    avg_gain = (
+        gain.rolling(period)
+        .mean()
+    )
+
+    avg_loss = (
+        loss.rolling(period)
+        .mean()
+    )
+
+    rs = avg_gain / avg_loss
+
+    rsi = 100 - (
+        100 / (1 + rs)
+    )
+
+    return rsi
+
+
+df["RSI14"] = (
+    df.groupby("Code")["AdjC"]
+    .transform(calc_rsi)
+)
+
+
+# ==========================
 # 最新日
 # ==========================
 
@@ -135,17 +208,34 @@ target = target.merge(
 # ==========================
 
 result = target[
+
+    # 前日1〜3％下落
     (target["ChangeRate"] >= -3) &
     (target["ChangeRate"] <= -1) &
 
+
+    # 株価
     (target["AdjC"] >= 500) &
     (target["AdjC"] <= 5000) &
 
+
+    # 流動性
     (target["AdjVo"] >= 100000) &
 
     (target["TradingValue"] >= 100000000) &
 
-    (target["AdjVo"] >= target["AvgVol5"])
+
+    # 出来高増加
+    (target["AdjVo"] >= target["AvgVol5"]) &
+
+
+    # BB下限付近
+    (target["AdjC"] <= target["BB_Lower"] * 1.02) &
+
+
+    # RSI売られすぎ
+    (target["RSI14"] <= 35)
+
 ]
 
 
@@ -158,8 +248,9 @@ result = result.sort_values(
 )
 
 
+
 # ==========================
-# Discord通知文章作成
+# Discord文章
 # ==========================
 
 if len(result) == 0:
@@ -172,7 +263,7 @@ if len(result) == 0:
 else:
 
     message = (
-        "📈 デイトレ候補\n"
+        "📈 逆張りデイトレ候補\n"
         f"対象日：{latest_date}\n"
         f"該当：{len(result)}銘柄\n\n"
     )
@@ -181,12 +272,23 @@ else:
     for _, row in result.head(10).iterrows():
 
         message += (
+
             f"🔹 {row['Code']} {row['CoName']}\n"
+
             f"株価：{row['AdjC']}円\n"
+
             f"前日比：{row['ChangeRate']:.2f}%\n"
+
+            f"RSI：{row['RSI14']:.1f}\n"
+
+            f"BB下限比："
+            f"{row['AdjC']/row['BB_Lower']*100:.1f}%\n"
+
             f"出来高：{int(row['AdjVo']):,}\n"
-            f"売買代金：{int(row['TradingValue']/10000):,}万円\n"
-            f"\n"
+
+            f"売買代金："
+            f"{int(row['TradingValue']/10000):,}万円\n\n"
+
         )
 
 
@@ -194,7 +296,6 @@ else:
 # Discord送信
 # ==========================
 
-# Discord文字数制限対策
 if len(message) > 1900:
     message = message[:1900] + "\n...省略"
 
@@ -210,9 +311,5 @@ response = requests.post(
 print("文字数:", len(message))
 print("Discord応答:", response.status_code)
 print(response.text)
-
-# ==========================
-# ログ表示
-# ==========================
 
 print(message)

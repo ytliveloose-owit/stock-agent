@@ -195,7 +195,7 @@ else:
 # ==========================
 
 requests.post(
-    DISCORD_WEBHOOK,
+    DISCORD_WEBHOOK_URL,
     json={
         "content": message
     }

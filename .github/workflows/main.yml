@@ -1,6 +1,11 @@
 name: Run Stock Scan
 
 on:
+  # 毎朝7:00（日本時間）
+  schedule:
+    - cron: '30 22 * * 0-4'
+
+  # 手動実行も可能
   workflow_dispatch:
 
 jobs:

@@ -1,7 +1,11 @@
 import jquantsapi
 
-# GitHub Secrets の JQUANTS_API_KEY を自動利用
+# GitHub Secrets の JQUANTS_API_KEY を利用
 cli = jquantsapi.ClientV2()
 
-# ClientV2で利用できるメソッド一覧を表示
-print(dir(cli))
+# 銘柄マスター取得
+master = cli.get_eq_master()
+
+print(master.columns.tolist())
+print()
+print(master.head())

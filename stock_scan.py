@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import jquantsapi
 
+
 # ==========================
 # J-Quants API
 # ==========================
@@ -10,10 +11,12 @@ cli = jquantsapi.ClientV2()
 
 # ==========================
 # 取得期間
-# 5日平均出来高計算のため過去5営業日取得
+# 実行日から過去7日取得
 # ==========================
-start_dt = datetime(2026, 4, 20)
-end_dt = datetime(2026, 4, 27)
+today = datetime.now()
+
+start_dt = today - timedelta(days=10)
+end_dt = today - timedelta(days=1)
 
 
 # ==========================
@@ -65,7 +68,6 @@ df["AvgVol5"] = (
 
 # ==========================
 # 売買代金
-# 株価 × 出来高
 # ==========================
 df["TradingValue"] = (
     df["AdjC"] * df["AdjVo"]
@@ -73,10 +75,13 @@ df["TradingValue"] = (
 
 
 # ==========================
-# 最新日だけ抽出
+# 最新取得日を対象
+# （市場が開いている最新日）
 # ==========================
+latest_date = df["Date"].max()
+
 target = df[
-    df["Date"] == pd.Timestamp(end_dt)
+    df["Date"] == latest_date
 ]
 
 
@@ -114,8 +119,8 @@ result = target[
     (target["ChangeRate"] >= -3) &
     (target["ChangeRate"] <= -1) &
 
-    # 株価200～5000円
-    (target["AdjC"] >= 200) &
+    # 株価500～5000円
+    (target["AdjC"] >= 500) &
     (target["AdjC"] <= 5000) &
 
     # 出来高10万株以上
@@ -124,7 +129,7 @@ result = target[
     # 売買代金1億円以上
     (target["TradingValue"] >= 100000000) &
 
-    # 前5日平均より出来高増加
+    # 前5日平均以上の出来高
     (target["AdjVo"] >= target["AvgVol5"])
 ]
 
@@ -154,6 +159,7 @@ result = result[
 ]
 
 
+print("対象日:", latest_date)
 print(result.to_string(index=False))
 
 print()

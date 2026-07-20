@@ -178,7 +178,7 @@ else:
     )
 
 
-    for _, row in result.head(10).iterrows()
+    for _, row in result.head(10).iterrows():
 
         message += (
             f"🔹 {row['Code']} {row['CoName']}\n"

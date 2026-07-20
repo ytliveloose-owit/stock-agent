@@ -1,9 +1,7 @@
-from datetime import datetime
 import jquantsapi
 
+# GitHub Secrets の JQUANTS_API_KEY を自動利用
 cli = jquantsapi.ClientV2()
 
-listing = cli.get_listed_info()
-
-print(listing.columns.tolist())
-print(listing.head())
+# ClientV2で利用できるメソッド一覧を表示
+print(dir(cli))

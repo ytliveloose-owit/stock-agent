@@ -1,9 +1,19 @@
-import os
+from datetime import datetime, timedelta
+import jquantsapi
 
-api_key = os.getenv("JQUANTS_API_KEY")
+# GitHub SecretsのJQUANTS_API_KEYを自動で利用
+cli = jquantsapi.ClientV2()
 
-if api_key:
-    print("APIキーを正常に読み込みました。")
-    print(f"キーの先頭5文字: {api_key[:5]}*****")
-else:
-    print("APIキーが読み込めません。")
+# 今日と昨日
+end_dt = datetime.now()
+start_dt = end_dt - timedelta(days=1)
+
+# 日足データ取得
+df = cli.get_eq_bars_daily_range(
+    start_dt=start_dt,
+    end_dt=end_dt
+)
+
+print(df.head())
+print()
+print(f"取得件数: {len(df)}")

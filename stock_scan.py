@@ -178,7 +178,7 @@ else:
     )
 
 
-    for _, row in result.iterrows():
+    for _, row in result.head(10).iterrows()
 
         message += (
             f"🔹 {row['Code']} {row['CoName']}\n"
@@ -194,12 +194,19 @@ else:
 # Discord送信
 # ==========================
 
-requests.post(
+# Discord文字数制限対策
+if len(message) > 1900:
+    message = message[:1900] + "\n...省略"
+
+
+response = requests.post(
     DISCORD_WEBHOOK_URL,
     json={
         "content": message
     }
 )
+
+
 print("文字数:", len(message))
 print("Discord応答:", response.status_code)
 print(response.text)

@@ -200,7 +200,9 @@ requests.post(
         "content": message
     }
 )
-
+print("文字数:", len(message))
+print("Discord応答:", response.status_code)
+print(response.text)
 
 # ==========================
 # ログ表示

@@ -21,6 +21,8 @@ df = cli.get_eq_bars_daily_range(
     start_dt=start_dt,
     end_dt=end_dt
 )
+print(df.columns.tolist())
+print(df.head())
 
 # ==========================
 # 前日比（％）計算

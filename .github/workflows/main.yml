@@ -22,5 +22,5 @@ jobs:
       - name: Run Python
         env:
           JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: python stock_scan.py

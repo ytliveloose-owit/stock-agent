@@ -97,14 +97,19 @@ if os.path.exists(csv_file):
         dtype={"Code": str}
     )
 
-    df = pd.concat(
-        [old, df],
-        ignore_index=True
-    )
+df = pd.concat(
+    [old, df],
+    ignore_index=True
+)
 
-    df = df.drop_duplicates(
+df = (
+    df.drop_duplicates(
         subset=["Code", "Date"]
     )
+    .sort_values(
+        ["Code", "Date"]
+    )
+)
 
 df.to_csv(
     csv_file,

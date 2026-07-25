@@ -166,16 +166,20 @@ df = df[~noise_mask]
 # ==========================
 
 signal = df[
-    (df["ChangeRate"] >= -5) &
-    (df["ChangeRate"] <= -2) &
-    (df["AdjC"] >= 700) &
-    (df["AdjC"] <= 3000) &
+    (df["ChangeRate"] >= -6) &
+    (df["ChangeRate"] <= -3) &
+    (df["AdjC"] >= 1000) &
+    (df["AdjC"] <= 2500) &
     (df["AdjVo"] >= 100000) &
     (df["TradingValue"] >= 300000000) &
-    (df["AdjVo"] >= df["AvgVol5"]*1.5) &      # 出来高50％増
+    (df["AdjVo"] >= df["AvgVol5"]*2.0) &      # 出来高2倍
     (df["AdjC"] <= df["BB_Lower"] * 1.00) &   # BB下限割れ
-    (df["RSI14"] <= 25)                       # RSI25以下
+    (df["RSI14"] <= 25) &                     # RSI25以下
+    (df["AdjC"] > df["AdjO"])                 # 当日陽線
 ]
+
+df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
+signal = signal[signal["BB_Diff"] <= -0.03]   # BB下限から3%以上オーバーシュート
 
 # ==========================
 # 利確・損切り判定（デイトレ）

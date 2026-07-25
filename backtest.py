@@ -215,17 +215,6 @@ def intraday_return(row):
 signal["Return"] = signal.apply(intraday_return, axis=1)
 
 # ==========================
-# 利益率
-# （翌日始値買い→翌日終値売り）
-# ==========================
-
-signal["Return"] = (
-    (signal["NextClose"] - signal["NextOpen"])
-    / signal["NextOpen"]
-    * 100
-)
-
-# ==========================
 # バックテスト結果（売られすぎTOP5）
 # ==========================
 

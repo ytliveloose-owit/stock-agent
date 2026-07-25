@@ -81,19 +81,12 @@ df = df.sort_values(
 # CSV保存
 # ==========================
 
-csv_file = "daily_data.csv"
+if not old.empty:
 
-if os.path.exists(csv_file):
-
-    old = pd.read_csv(
-        csv_file,
-        dtype={"Code": str}
+    df = pd.concat(
+        [old, df],
+        ignore_index=True
     )
-
-df = pd.concat(
-    [old, df],
-    ignore_index=True
-)
 
 df = (
     df.drop_duplicates(
@@ -111,7 +104,5 @@ df.to_csv(
 )
 
 print(df.head())
-
 print()
-
 print("保存件数:", len(df))

@@ -46,6 +46,22 @@ df = df.sort_values(
 )
 
 # ==========================
+# 東証プライム銘柄のみ
+# ==========================
+
+master = cli.get_eq_master()
+
+prime = master[
+    master["MktNm"] == "プライム"
+][["Code"]]
+
+df = df.merge(
+    prime,
+    on="Code",
+    how="inner"
+)
+
+# ==========================
 # CSV読み込み
 # ==========================
 

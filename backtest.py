@@ -143,6 +143,57 @@ signal["Return"] = (
 )
 
 # ==========================
+# バックテスト結果（売られすぎTOP5）
+# ==========================
+
+# 条件に合う銘柄（signal）を日付ごとにグループ化
+grouped = signal.groupby("Date")
+
+# 各日の条件銘柄から ChangeRate 昇順でトップ5のみ抽出
+top5 = grouped.apply(lambda g: g.sort_values("ChangeRate").head(5))
+
+# groupby.apply の階層インデックスを解除
+top5 = top5.reset_index(drop=True)
+
+# 翌日データがあるものだけ残す
+top5 = top5.dropna(subset=["Return"])
+
+# バックテスト集計
+wins = top5[top5["Return"] > 0]
+losses = top5[top5["Return"] <= 0]
+
+trade_count = len(top5)
+win_count = len(wins)
+loss_count = len(losses)
+
+win_rate = win_count / trade_count * 100 if trade_count > 0 else 0
+avg_return = top5["Return"].mean()
+avg_win = wins["Return"].mean() if win_count > 0 else 0
+avg_loss = losses["Return"].mean() if loss_count > 0 else 0
+profit_factor = wins["Return"].sum() / abs(losses["Return"].sum()) if loss_count > 0 else float("inf")
+
+print("=" * 40)
+print("トップ5銘柄のみバックテスト結果")
+print("=" * 40)
+print(f"取引回数      ：{trade_count}")
+print(f"勝ち          ：{win_count}")
+print(f"負け          ：{loss_count}")
+print(f"勝率          ：{win_rate:.2f}%")
+print(f"平均利益率    ：{avg_return:.2f}%")
+print(f"平均勝ち      ：{avg_win:.2f}%")
+print(f"平均負け      ：{avg_loss:.2f}%")
+print(f"最大利益      ：{top5['Return'].max():.2f}%")
+print(f"最大損失      ：{top5['Return'].min():.2f}%")
+print(f"プロフィットファクター：{profit_factor:.2f}")
+
+print()
+print("=== 上位20件（トップ5銘柄） ===")
+print(top5[
+    ["Date", "Code", "AdjC", "NextOpen", "NextClose", "Return"]
+].head(20))
+
+
+# ==========================
 # バックテスト結果
 # ==========================
 

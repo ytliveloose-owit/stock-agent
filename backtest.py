@@ -16,6 +16,21 @@ df = df.sort_values(
 )
 
 # ==========================
+# バックテスト対象期間
+# ==========================
+START_DATE = "2023-01-01"
+
+END_DATE   = "2025-12-31"
+
+df = df[
+
+    (df["Date"] >= START_DATE) &
+
+    (df["Date"] <= END_DATE)
+
+].copy()
+
+# ==========================
 # 前日終値
 # ==========================
 
@@ -302,6 +317,7 @@ profit_factor = (
 print("=" * 40)
 print("バックテスト結果")
 print("=" * 40)
+print(f"対象期間      ：{START_DATE} ～ {END_DATE}")
 
 print(f"取引回数      ：{trade_count}")
 print(f"勝ち          ：{win_count}")

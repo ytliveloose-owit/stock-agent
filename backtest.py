@@ -177,26 +177,46 @@ df["PM_Strength"] = df["AdjC"] / df["AdjO"]
 df["VWAP"] = df["TradingValue"] / df["AdjVo"]
 
 # ==========================
-# 条件抽出
+# 買いシグナル抽出条件
 # ==========================
 
 signal = df[
-    (df["ChangeRate"] >= -5) &
-    (df["ChangeRate"] <= -2) &
-    (df["AdjC"] >= 700) &
-    (df["AdjC"] <=4000) &
-    (df["AdjVo"] >= 100000) &
-    (df["TradingValue"] >= 300000000) &
-    (df["AdjVo"] >= df["AvgVol5"]*1.5) &      # 出来高1.5倍
-    (df["AdjC"] <= df["BB_Lower"] * 1.00) &   # BB下限割れ
-    (df["RSI14"] <= 25) &                     # RSI25以下
-    (df["AdjC"] > df["AdjO"])                 # 当日陽線
-]
 
-df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
-signal = signal[signal["BB_Diff"] <= -0.02]   # BB下限から2%以上オーバーシュート
-signal = signal[signal["PM_Strength"] > 1.01]
-signal = signal[signal["AdjC"] > signal["VWAP"]]
+    # 前日比 -2～-4%下落
+    # （押し目・反発を狙う）
+    (df["ChangeRate"] >= -4) &
+    (df["ChangeRate"] <= -2) &
+
+    # 株価700～4,000円
+    # （値動きと資金効率のバランス）
+    (df["AdjC"] >= 700) &
+    (df["AdjC"] <= 4000) &
+
+    # 出来高10万株以上
+    # （最低限の流動性を確保）
+    (df["AdjVo"] >= 100000) &
+
+    # 売買代金2億円以上
+    # （機関投資家も参加しやすい銘柄）
+    (df["TradingValue"] >= 200000000) &
+
+    # 出来高が直近5日平均の1.2倍以上
+    # （出来高増加＝注目度上昇）
+    (df["AdjVo"] >= df["AvgVol5"] * 1.2) &
+
+    # ボリンジャーバンド下限付近（1%以内）
+    # （売られ過ぎを狙う）
+    (df["AdjC"] <= df["BB_Lower"] * 1.01) &
+
+    # RSI30以下
+    # （売られ過ぎ水準）
+    (df["RSI14"] <= 30) &
+
+    # 当日陽線
+    # （買い勢力が入り始めている）
+    (df["AdjC"] > df["AdjO"])
+
+]
 
 # ==========================
 # 利確・損切り判定（デイトレ）

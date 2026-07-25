@@ -182,7 +182,10 @@ target = df[
 # 銘柄マスター
 # ==========================
 
-master = cli.get_eq_master()
+master = pd.read_csv(
+    "eq_master.csv",
+    dtype={"Code": str}
+)
 
 
 prime = master[

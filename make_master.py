@@ -1,4 +1,3 @@
-import pandas as pd
 import jquantsapi
 
 cli = jquantsapi.ClientV2()
@@ -11,4 +10,4 @@ master.to_csv(
     encoding="utf-8-sig"
 )
 
-print("保存完了")
+print("eq_master.csv 作成完了")

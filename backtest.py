@@ -222,17 +222,8 @@ signal = df[
     # 当日陽線
     (df["AdjC"] > df["AdjO"]) &
 
-    # 前日も陽線
-    (df["PrevClose"] > df["PrevOpen"]) &
-
     # 5日線より下
-    (df["AdjC"] < df["MA5"]) &
-
-    # RSI回復
-    (df["RSI14"] > df["PrevRSI"]) &
-
-    # ギャップダウンし過ぎを除外
-    (df["AdjO"] >= df["PrevClose"] * 0.98)
+    (df["AdjC"] < df["MA5"]) 
 
 ].copy()
 

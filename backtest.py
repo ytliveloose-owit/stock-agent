@@ -11,7 +11,7 @@ cli = jquantsapi.ClientV2()
 # 取得期間
 # ==========================
 start_dt = datetime(2025, 1, 1)
-end_dt = datetime(2025, 1, 31
+end_dt = datetime(2025, 1, 31)
 
 # ==========================
 # 日足取得

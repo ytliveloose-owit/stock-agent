@@ -116,9 +116,10 @@ df["NextClose"] = (
 )
 
 # ==========================
-# 決算日っぽい異常値動きの除外
+# ノイズ除外（完全版）
 # ==========================
 
+# --- 1. 決算日っぽい異常値動き ---
 df["VolSpike"] = df["AdjVo"] >= df["AvgVol5"] * 3        # 出来高3倍以上
 df["BigMove"] = (df["ChangeRate"].abs() >= 10)           # 前日比 ±10%以上
 df["BB_Anomaly"] = (
@@ -126,8 +127,44 @@ df["BB_Anomaly"] = (
     (df["AdjC"] <= df["BB_Lower"] * 0.95)                # BB下限から5%以上下
 )
 
-# いずれかに該当する行を除外
-df = df[~(df["VolSpike"] | df["BigMove"] | df["BB_Anomaly"])]
+# --- 2. 配当落ち日（権利落ち日） ---
+# 配当落ちは「必ず下がる」ため逆張りのノイズ
+df["DividendDrop"] = (
+    (df["ChangeRate"] <= -3) &
+    (df["AdjVo"] <= df["AvgVol5"] * 1.2)                 # 出来高は増えないことが多い
+)
+
+# --- 3. ストップ高・ストップ安の翌日 ---
+df["LimitUpDown"] = (
+    (df["PrevClose"] > 0) &
+    ((df["AdjC"] >= df["PrevClose"] * 1.2) |             # ストップ高翌日
+     (df["AdjC"] <= df["PrevClose"] * 0.8))              # ストップ安翌日
+)
+
+# --- 4. 大口売買による異常値動き ---
+df["WhaleTrade"] = (
+    (df["AdjVo"] >= df["AvgVol5"] * 5) |                 # 出来高5倍以上
+    (df["ChangeRate"].abs() >= 8)                        # ±8%以上の急変
+)
+
+# --- 5. 株式分割・併合などのイベント日（値動きから判定） ---
+df["SplitMerge"] = (
+    (df["AdjC"] <= df["PrevClose"] * 0.5) |              # 併合で急落
+    (df["AdjC"] >= df["PrevClose"] * 1.5)                # 分割で急騰
+)
+
+# --- すべてのノイズをまとめて除外 ---
+noise_mask = (
+    df["VolSpike"] |
+    df["BigMove"] |
+    df["BB_Anomaly"] |
+    df["DividendDrop"] |
+    df["LimitUpDown"] |
+    df["WhaleTrade"] |
+    df["SplitMerge"]
+)
+
+df = df[~noise_mask]
 
 # ==========================
 # 条件抽出

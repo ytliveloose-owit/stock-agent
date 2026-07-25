@@ -116,6 +116,20 @@ df["NextClose"] = (
 )
 
 # ==========================
+# 決算日っぽい異常値動きの除外
+# ==========================
+
+df["VolSpike"] = df["AdjVo"] >= df["AvgVol5"] * 3        # 出来高3倍以上
+df["BigMove"] = (df["ChangeRate"].abs() >= 10)           # 前日比 ±10%以上
+df["BB_Anomaly"] = (
+    (df["AdjC"] >= df["BB_Lower"] * 1.05) |              # BB下限から5%以上上
+    (df["AdjC"] <= df["BB_Lower"] * 0.95)                # BB下限から5%以上下
+)
+
+# いずれかに該当する行を除外
+df = df[~(df["VolSpike"] | df["BigMove"] | df["BB_Anomaly"])]
+
+# ==========================
 # 条件抽出
 # ==========================
 

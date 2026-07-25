@@ -10,11 +10,55 @@ import jquantsapi
 cli = jquantsapi.ClientV2()
 
 # ==========================
-# 取得期間（まずは1か月）
+# 取得期間（1か月）
 # ==========================
 
-start_dt = datetime(2025, 1, 1)
-end_dt = datetime(2025, 1, 31)
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import calendar
+import os
+
+csv_file = "daily_data.csv"
+
+# CSVが存在する場合
+if os.path.exists(csv_file):
+
+    old = pd.read_csv(
+        csv_file,
+        dtype={"Code": str}
+    )
+
+    old["Date"] = pd.to_datetime(old["Date"])
+
+    last_date = old["Date"].max()
+
+    # 次の月の1日
+    start_dt = (
+        last_date.replace(day=1)
+        + relativedelta(months=1)
+    )
+
+# CSVが無い場合
+else:
+
+    old = pd.DataFrame()
+
+    start_dt = datetime(2023, 1, 1)
+
+# 月末日
+last_day = calendar.monthrange(
+    start_dt.year,
+    start_dt.month
+)[1]
+
+end_dt = datetime(
+    start_dt.year,
+    start_dt.month,
+    last_day
+)
+
+print(start_dt)
+print(end_dt)
 
 # ==========================
 # 日足取得

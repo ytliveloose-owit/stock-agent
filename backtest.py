@@ -128,7 +128,7 @@ signal = df[
     (df["TradingValue"] >= 100000000) &
     (df["AdjVo"] >= df["AvgVol5"]*1.2) &      # 出来高20％増
     (df["AdjC"] <= df["BB_Lower"] * 1.00) &   # BB下限割れ
-    (df["RSI14"] <= 25)                       ＃ RSI25以下
+    (df["RSI14"] <= 25)                       # RSI25以下
 ]
 
 # ==========================

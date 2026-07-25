@@ -225,7 +225,7 @@ signal = df[
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
 
     # 5日線より下
-    (df["AdjC"] < df["MA5"]*0.98) 
+    (df["AdjC"] < df["MA5"]*0.99) 
 
 ].copy()
 

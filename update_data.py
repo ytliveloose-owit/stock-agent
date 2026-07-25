@@ -17,7 +17,7 @@ cli = jquantsapi.ClientV2()
 # ==========================
 
 YEAR = 2023
-MONTH = 5
+MONTH = 6
 
 start_dt = datetime(YEAR, MONTH, 1)
 

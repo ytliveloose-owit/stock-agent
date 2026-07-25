@@ -102,6 +102,20 @@ df["RSI14"] = (
 )
 
 # ==========================
+# 翌日の株価
+# ==========================
+
+df["NextOpen"] = (
+    df.groupby("Code")["AdjO"]
+    .shift(-1)
+)
+
+df["NextClose"] = (
+    df.groupby("Code")["AdjC"]
+    .shift(-1)
+)
+
+# ==========================
 # 条件抽出
 # ==========================
 
@@ -117,13 +131,45 @@ signal = df[
     (df["RSI14"] <= 35)
 ]
 
-print(signal[[
-    "Date",
-    "Code",
-    "AdjC",
-    "ChangeRate",
-    "RSI14"
-]])
+# ==========================
+# 利益率
+# （翌日始値買い→翌日終値売り）
+# ==========================
+
+signal["Return"] = (
+    (signal["NextClose"] - signal["NextOpen"])
+    / signal["NextOpen"]
+    * 100
+)
 
 print()
+
 print("シグナル数:", len(signal))
+
+print()
+
+print(signal[
+    [
+        "Date",
+        "Code",
+        "AdjC",
+        "NextOpen",
+        "NextClose",
+        "Return"
+    ]
+].head(20))
+
+print()
+
+print("平均利益率")
+print(signal["Return"].mean())
+
+print()
+
+print("最大利益")
+print(signal["Return"].max())
+
+print()
+
+print("最大損失")
+print(signal["Return"].min())

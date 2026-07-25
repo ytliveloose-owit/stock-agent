@@ -45,17 +45,24 @@ else:
 
     start_dt = datetime(2023, 1, 1)
 
-# 月末日
+# ==========================
+# 3か月分取得
+# ==========================
+
+end_month = start_dt + relativedelta(months=2)
+
 last_day = calendar.monthrange(
-    start_dt.year,
-    start_dt.month
+    end_month.year,
+    end_month.month
 )[1]
 
 end_dt = datetime(
-    start_dt.year,
-    start_dt.month,
+    end_month.year,
+    end_month.month,
     last_day
 )
+
+print(f"取得期間：{start_dt:%Y-%m-%d} ～ {end_dt:%Y-%m-%d}")
 
 print(start_dt)
 print(end_dt)

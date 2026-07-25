@@ -142,12 +142,60 @@ signal["Return"] = (
     * 100
 )
 
+# ==========================
+# バックテスト結果
+# ==========================
+
+# 翌日のデータがない行を除外
+signal = signal.dropna(subset=["Return"])
+
+wins = signal[signal["Return"] > 0]
+losses = signal[signal["Return"] <= 0]
+
+trade_count = len(signal)
+win_count = len(wins)
+loss_count = len(losses)
+
+win_rate = (
+    win_count / trade_count * 100
+    if trade_count > 0 else 0
+)
+
+avg_return = signal["Return"].mean()
+
+avg_win = (
+    wins["Return"].mean()
+    if win_count > 0 else 0
+)
+
+avg_loss = (
+    losses["Return"].mean()
+    if loss_count > 0 else 0
+)
+
+profit_factor = (
+    wins["Return"].sum() /
+    abs(losses["Return"].sum())
+    if loss_count > 0 else float("inf")
+)
+
+print("=" * 40)
+print("バックテスト結果")
+print("=" * 40)
+
+print(f"取引回数      ：{trade_count}")
+print(f"勝ち          ：{win_count}")
+print(f"負け          ：{loss_count}")
+print(f"勝率          ：{win_rate:.2f}%")
+print(f"平均利益率    ：{avg_return:.2f}%")
+print(f"平均勝ち      ：{avg_win:.2f}%")
+print(f"平均負け      ：{avg_loss:.2f}%")
+print(f"最大利益      ：{signal['Return'].max():.2f}%")
+print(f"最大損失      ：{signal['Return'].min():.2f}%")
+print(f"プロフィットファクター：{profit_factor:.2f}")
+
 print()
-
-print("シグナル数:", len(signal))
-
-print()
-
+print("=== 上位20件 ===")
 print(signal[
     [
         "Date",
@@ -158,18 +206,3 @@ print(signal[
         "Return"
     ]
 ].head(20))
-
-print()
-
-print("平均利益率")
-print(signal["Return"].mean())
-
-print()
-
-print("最大利益")
-print(signal["Return"].max())
-
-print()
-
-print("最大損失")
-print(signal["Return"].min())

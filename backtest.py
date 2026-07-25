@@ -222,7 +222,7 @@ signal = df[
     (df["RSI14"] <= 25) &
 
     # 当日陽線
-    (df["AdjC"] > df["AdjO"]) &
+    ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
 
     # 5日線より下
     (df["AdjC"] < df["MA5"]*0.98) 

@@ -28,7 +28,10 @@ if os.path.exists(csv_file):
         dtype={"Code": str}
     )
 
-    old["Date"] = pd.to_datetime(old["Date"])
+    old["Date"] = pd.to_datetime(
+    old["Date"],
+    format="mixed"
+)
 
     last_date = old["Date"].max()
 

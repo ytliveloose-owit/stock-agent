@@ -1,11 +1,10 @@
 name: Run Stock Scan
 
 on:
-  # 毎朝7:00（日本時間）
   schedule:
-    - cron: '30 22 * * 0-4'
+    # 日本時間 平日8:00
+    - cron: '0 23 * * 0-4'
 
-  # 手動実行も可能
   workflow_dispatch:
 
 jobs:
@@ -28,7 +27,7 @@ jobs:
         env:
           JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          run: python make_master.py
+        run: python stock_scan.py
 
       - name: Upload eq_master
         uses: actions/upload-artifact@v4

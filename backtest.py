@@ -183,6 +183,43 @@ signal = df[
 ]
 
 # ==========================
+# 利確・損切り判定（デイトレ）
+# ==========================
+
+# 翌日の高値・安値
+df["NextHigh"] = df.groupby("Code")["AdjH"].shift(-1)
+df["NextLow"]  = df.groupby("Code")["AdjL"].shift(-1)
+
+# エントリー価格
+entry = signal["NextOpen"]
+
+# 利確・損切りライン
+tp = entry * 1.04   # +4%
+sl = entry * 0.98   # -2%
+
+# 判定
+def intraday_return(row):
+    if pd.isna(row["NextHigh"]) or pd.isna(row["NextLow"]):
+        return None
+
+    entry = row["NextOpen"]
+    tp = entry * 1.04
+    sl = entry * 0.98
+
+    # 利確
+    if row["NextHigh"] >= tp:
+        return 4.0
+
+    # 損切り
+    if row["NextLow"] <= sl:
+        return -2.0
+
+    # どちらも到達しない → 終値で決済
+    return (row["NextClose"] - entry) / entry * 100
+
+signal["Return"] = signal.apply(intraday_return, axis=1)
+
+# ==========================
 # 利益率
 # （翌日始値買い→翌日終値売り）
 # ==========================
@@ -205,6 +242,35 @@ top5 = grouped.apply(lambda g: g.sort_values("ChangeRate").head(5))
 
 # groupby.apply の階層インデックスを解除
 top5 = top5.reset_index(drop=True)
+
+# ==========================
+# top5 用：利確・損切り判定（デイトレ）
+# ==========================
+
+# 翌日の高値・安値
+top5["NextHigh"] = top5.groupby("Code")["AdjH"].shift(-1)
+top5["NextLow"]  = top5.groupby("Code")["AdjL"].shift(-1)
+
+def intraday_return_top5(row):
+    if pd.isna(row["NextHigh"]) or pd.isna(row["NextLow"]):
+        return None
+
+    entry = row["NextOpen"]
+    tp = entry * 1.04   # +4%
+    sl = entry * 0.98   # -2%
+
+    # 利確
+    if row["NextHigh"] >= tp:
+        return 4.0
+
+    # 損切り
+    if row["NextLow"] <= sl:
+        return -2.0
+
+    # どちらも到達しない → 終値で決済
+    return (row["NextClose"] - entry) / entry * 100
+
+top5["Return"] = top5.apply(intraday_return_top5, axis=1)
 
 # 翌日データがあるものだけ残す
 top5 = top5.dropna(subset=["Return"])

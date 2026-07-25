@@ -1,3 +1,4 @@
 jquants-api-client
 pandas
 requests
+python-dateutil

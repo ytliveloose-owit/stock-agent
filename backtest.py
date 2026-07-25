@@ -168,6 +168,18 @@ df = df[~noise_mask]
 df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
 
 # ==========================
+# 買いの強さ（後場強い）
+# ==========================
+df["PM_Strength"] = df["AdjC"] / df["AdjO"]
+signal = signal[signal["PM_Strength"] > 1.01]
+
+# ==========================
+# VWAP 上抜け（買いが強い）
+# ==========================
+df["VWAP"] = df["TradingValue"] / df["AdjVo"]
+signal = signal[signal["AdjC"] > df["VWAP"]]
+
+# ==========================
 # 条件抽出
 # ==========================
 
@@ -223,18 +235,6 @@ def intraday_return(row):
     return (row["NextClose"] - entry) / entry * 100
 
 signal["Return"] = signal.apply(intraday_return, axis=1)
-
-# ==========================
-# 買いの強さ（後場強い）
-# ==========================
-df["PM_Strength"] = df["AdjC"] / df["AdjO"]
-signal = signal[signal["PM_Strength"] > 1.01]
-
-# ==========================
-# VWAP 上抜け（買いが強い）
-# ==========================
-df["VWAP"] = df["TradingValue"] / df["AdjVo"]
-signal = signal[signal["AdjC"] > df["VWAP"]]
 
 # ==========================
 # BB乖離強化（オーバーシュート）

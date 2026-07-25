@@ -28,4 +28,10 @@ jobs:
         env:
           JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python make_master.py
+          
+        run: python 
+      - name: Upload eq_master
+        uses: actions/upload-artifact@v4
+        with:
+          name: eq_master
+          path: eq_master.csv

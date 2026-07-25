@@ -136,11 +136,11 @@ df = df[~(df["VolSpike"] | df["BigMove"] | df["BB_Anomaly"])]
 signal = df[
     (df["ChangeRate"] >= -5) &
     (df["ChangeRate"] <= -2) &
-    (df["AdjC"] >= 500) &
-    (df["AdjC"] <= 5000) &
+    (df["AdjC"] >= 700) &
+    (df["AdjC"] <= 3000) &
     (df["AdjVo"] >= 100000) &
-    (df["TradingValue"] >= 100000000) &
-    (df["AdjVo"] >= df["AvgVol5"]*1.3) &      # 出来高30％増
+    (df["TradingValue"] >= 300000000) &
+    (df["AdjVo"] >= df["AvgVol5"]*1.5) &      # 出来高50％増
     (df["AdjC"] <= df["BB_Lower"] * 1.00) &   # BB下限割れ
     (df["RSI14"] <= 25)                       # RSI25以下
 ]

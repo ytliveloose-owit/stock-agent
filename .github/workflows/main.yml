@@ -27,7 +27,7 @@ jobs:
         env:
           JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python stock_scan.py
+        run: python make_master.py
 
       - name: Upload eq_master
         uses: actions/upload-artifact@v4

@@ -1,5 +1,7 @@
 from datetime import datetime
+import calendar
 import os
+
 import pandas as pd
 import jquantsapi
 
@@ -10,58 +12,25 @@ import jquantsapi
 cli = jquantsapi.ClientV2()
 
 # ==========================
-# 取得期間（1か月）
+# 取得したい年月を指定
+# （ここだけ変更）
 # ==========================
 
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-import calendar
-import os
+YEAR = 2025
+MONTH = 2
 
-csv_file = "daily_data.csv"
+start_dt = datetime(YEAR, MONTH, 1)
 
-# CSVが存在する場合
-if os.path.exists(csv_file):
-
-    old = pd.read_csv(
-        csv_file,
-        dtype={"Code": str}
-    )
-
-    old["Date"] = pd.to_datetime(
-    old["Date"],
-    format="mixed"
-)
-
-    last_date = old["Date"].max()
-
-    # 次の月の1日
-    start_dt = (
-        last_date.replace(day=1)
-        + relativedelta(months=1)
-    )
-
-# CSVが無い場合
-else:
-
-    old = pd.DataFrame()
-
-    start_dt = datetime(2023, 1, 1)
-
-# 月末日
-last_day = calendar.monthrange(
-    start_dt.year,
-    start_dt.month
-)[1]
+last_day = calendar.monthrange(YEAR, MONTH)[1]
 
 end_dt = datetime(
-    start_dt.year,
-    start_dt.month,
+    YEAR,
+    MONTH,
     last_day
 )
 
-print(start_dt)
-print(end_dt)
+print("取得期間")
+print(start_dt.date(), "～", end_dt.date())
 
 # ==========================
 # 日足取得
@@ -72,16 +41,43 @@ df = cli.get_eq_bars_daily_range(
     end_dt=end_dt
 )
 
-# ==========================
-# 並び替え
-# ==========================
-
 df = df.sort_values(
     ["Code", "Date"]
 )
 
 # ==========================
-# CSV保存
+# CSV読み込み
+# ==========================
+
+csv_file = "daily_data.csv"
+
+if os.path.exists(csv_file):
+
+    old = pd.read_csv(
+        csv_file,
+        dtype={"Code": str}
+    )
+
+    old["Date"] = pd.to_datetime(
+        old["Date"],
+        format="mixed"
+    )
+
+else:
+
+    old = pd.DataFrame()
+
+# ==========================
+# Date型統一
+# ==========================
+
+df["Date"] = pd.to_datetime(
+    df["Date"],
+    format="mixed"
+)
+
+# ==========================
+# 結合
 # ==========================
 
 if not old.empty:
@@ -91,14 +87,23 @@ if not old.empty:
         ignore_index=True
     )
 
+# ==========================
+# 重複削除
+# ==========================
+
 df = (
     df.drop_duplicates(
-        subset=["Code", "Date"]
+        subset=["Code", "Date"],
+        keep="last"
     )
     .sort_values(
         ["Code", "Date"]
     )
 )
+
+# ==========================
+# 保存
+# ==========================
 
 df.to_csv(
     csv_file,
@@ -106,6 +111,8 @@ df.to_csv(
     encoding="utf-8-sig"
 )
 
-print(df.head())
 print()
+
 print("保存件数:", len(df))
+
+print(df.head())

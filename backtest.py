@@ -194,7 +194,7 @@ signal = df[
 ]
 
 df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
-signal = signal[signal["BB_Diff"] <= -0.025]   # BB下限から2.5%以上オーバーシュート
+signal = signal[signal["BB_Diff"] <= -0.02]   # BB下限から2%以上オーバーシュート
 signal = signal[signal["PM_Strength"] > 1.01]
 signal = signal[signal["AdjC"] > signal["VWAP"]]
 
@@ -234,20 +234,6 @@ def intraday_return(row):
     return (row["NextClose"] - entry) / entry * 100
 
 signal["Return"] = signal.apply(intraday_return, axis=1)
-
-# ==========================
-# BB乖離強化（オーバーシュート）
-# ==========================
-signal = signal[signal["BB_Diff"] <= -0.025]
-
-# ==========================
-# 条件緩和（件数確保）
-# ==========================
-signal = signal[
-    (df["ChangeRate"] >= -6) &
-    (df["ChangeRate"] <= -2) &
-    (df["AdjVo"] >= df["AvgVol5"] * 1.2)
-]
 
 # ==========================
 # バックテスト結果

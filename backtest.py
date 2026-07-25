@@ -164,20 +164,17 @@ df = df[~noise_mask]
 # ==========================
 # BB乖離率（オーバーシュート判定）
 # ==========================
-
 df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
 
 # ==========================
 # 買いの強さ（後場強い）
 # ==========================
 df["PM_Strength"] = df["AdjC"] / df["AdjO"]
-signal = signal[signal["PM_Strength"] > 1.01]
 
 # ==========================
 # VWAP 上抜け（買いが強い）
 # ==========================
 df["VWAP"] = df["TradingValue"] / df["AdjVo"]
-signal = signal[signal["AdjC"] > df["VWAP"]]
 
 # ==========================
 # 条件抽出
@@ -197,7 +194,9 @@ signal = df[
 ]
 
 df["BB_Diff"] = (df["AdjC"] - df["BB_Lower"]) / df["AdjC"]
-signal = signal[signal["BB_Diff"] <= -0.015]   # BB下限から1.5%以上オーバーシュート
+signal = signal[signal["BB_Diff"] <= -0.025]   # BB下限から2.5%以上オーバーシュート
+signal = signal[signal["PM_Strength"] > 1.01]
+signal = signal[signal["AdjC"] > signal["VWAP"]]
 
 # ==========================
 # 利確・損切り判定（デイトレ）

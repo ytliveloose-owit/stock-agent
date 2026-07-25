@@ -139,8 +139,6 @@ df["PrevRSI"] = (
 
 df["NextOpen"] = df.groupby("Code")["AdjO"].shift(-1)
 df["NextClose"] = df.groupby("Code")["AdjC"].shift(-1)
-df["NextHigh"] = df.groupby("Code")["AdjH"].shift(-1)
-df["NextLow"]  = df.groupby("Code")["AdjL"].shift(-1)
 
 # ==========================
 # ノイズ除外（完全版）

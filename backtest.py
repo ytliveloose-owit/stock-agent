@@ -215,7 +215,7 @@ signal = df[
 
     # 前日比 -4～-2%
     (df["ChangeRate"] >= -7) &
-    (df["ChangeRate"] <= -2) &
+    (df["ChangeRate"] <= -3) &
 
     # 株価700～4000円
     (df["AdjC"] >= 700) &

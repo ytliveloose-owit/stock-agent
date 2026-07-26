@@ -122,6 +122,19 @@ df["BB_Lower"] = (
     - df["BB_STD20"] * 2
 )
 
+# ==========================
+# 5日移動平均
+# ==========================
+
+df["MA5"] = (
+    df.groupby("Code")["AdjC"]
+      .transform(
+          lambda x:
+          x.shift(1)
+           .rolling(5)
+           .mean()
+      )
+)
 
 # ==========================
 # RSI 14日
@@ -205,6 +218,107 @@ target = target.merge(
     how="inner"
 )
 
+# ==========================
+# ノイズ判定
+# ==========================
+
+# 決算などの異常出来高
+target["VolSpike"] = (
+    target["AdjVo"] >= target["AvgVol5"] * 3
+)
+
+# 異常な値動き
+target["BigMove"] = (
+    target["ChangeRate"].abs() >= 10
+)
+
+# BBから離れすぎ
+target["BB_Anomaly"] = (
+    (target["AdjC"] >= target["BB_Lower"] * 1.05) |
+    (target["AdjC"] <= target["BB_Lower"] * 0.95)
+)
+
+# 配当落ちっぽい日
+target["DividendDrop"] = (
+    (target["ChangeRate"] <= -3) &
+    (target["AdjVo"] <= target["AvgVol5"] * 1.2)
+)
+
+# ストップ高・ストップ安
+target["LimitUpDown"] = (
+    (target["PrevClose"] > 0) &
+    (
+        (target["AdjC"] >= target["PrevClose"] * 1.2) |
+        (target["AdjC"] <= target["PrevClose"] * 0.8)
+    )
+)
+
+# 大口売買
+target["WhaleTrade"] = (
+    (target["AdjVo"] >= target["AvgVol5"] * 5) |
+    (target["ChangeRate"].abs() >= 8)
+)
+
+# 分割・併合
+target["SplitMerge"] = (
+    (target["AdjC"] <= target["PrevClose"] * 0.5) |
+    (target["AdjC"] >= target["PrevClose"] * 1.5)
+)
+
+# ==========================
+# ノイズ除去
+# ==========================
+
+noise_mask = (
+
+    target["VolSpike"] |
+    target["BigMove"] |
+    target["BB_Anomaly"] |
+    target["DividendDrop"] |
+    target["LimitUpDown"] |
+    target["WhaleTrade"] |
+    target["SplitMerge"]
+
+)
+
+target = target[~noise_mask]
+
+# ==========================
+# スコア計算
+# ==========================
+
+# 出来高倍率
+target["VolRatio"] = target["AdjVo"] / target["AvgVol5"]
+
+# BB下限との距離（100%=BB下限）
+target["BBRatio"] = target["AdjC"] / target["BB_Lower"] * 100
+
+# RSI（低いほど高得点）
+target["Score_RSI"] = (35 - target["RSI14"]).clip(lower=0, upper=35)
+
+# BB下限に近いほど高得点
+target["Score_BB"] = (102 - target["BBRatio"]).clip(lower=0, upper=10) * 3
+
+# 出来高倍率
+target["Score_Vol"] = (
+    (target["VolRatio"] - 1.2)
+    .clip(lower=0, upper=2)
+    / 2
+    * 20
+)
+
+# 前日比（-3%が最高）
+target["Score_Drop"] = (
+    20
+    - (target["ChangeRate"] + 3).abs() * 20
+).clip(lower=0)
+
+target["Score"] = (
+    target["Score_RSI"]
+    + target["Score_BB"]
+    + target["Score_Vol"]
+    + target["Score_Drop"]
+)
 
 # ==========================
 # スクリーニング
@@ -212,44 +326,49 @@ target = target.merge(
 
 result = target[
 
-    # 前日1〜3％下落
-    (target["ChangeRate"] >= -3) &
-    (target["ChangeRate"] <= -1) &
+    # 前日比 -4～-2%
+    (target["ChangeRate"] >= -4) &
+    (target["ChangeRate"] <= -2) &
 
+    # 株価700～3000円
+    (target["AdjC"] >= 700) &
+    (target["AdjC"] <= 3000) &
 
-    # 株価
-    (target["AdjC"] >= 500) &
-    (target["AdjC"] <= 5000) &
-
-
-    # 流動性
+    # 出来高10万株以上
     (target["AdjVo"] >= 100000) &
 
-    (target["TradingValue"] >= 100000000) &
+    # 売買代金2億円以上
+    (target["TradingValue"] >= 200000000) &
 
-
-    # 出来高増加
-    (target["AdjVo"] >= target["AvgVol5"]) &
-
+    # 出来高は5日平均の1.2倍以上
+    (target["AdjVo"] >= target["AvgVol5"] * 1.2) &
 
     # BB下限付近
-    (target["AdjC"] <= target["BB_Lower"] * 1.02) &
+    (target["AdjC"] <= target["BB_Lower"] * 1.01) &
 
+    # RSI32以下
+    (target["RSI14"] <= 32) &
 
-    # RSI売られすぎ
-    (target["RSI14"] <= 35)
+    # 当日陽線（1%以上）
+    (
+        (target["AdjC"] - target["AdjO"])
+        / target["AdjO"]
+        >= 0.01
+    ) &
+
+    # 5日線より1%以上下
+    (
+        target["AdjC"]
+        < target["MA5"] * 0.99
+    )
 
 ]
-
 
 # ==========================
 # 下落率順
 # ==========================
 
-result = result.sort_values(
-    "ChangeRate"
-)
-
+result = result.sort_values("ChangeRate")
 
 
 # ==========================
@@ -260,41 +379,34 @@ if len(result) == 0:
 
     message = (
         "📉 デイトレ候補なし\n"
-        f"対象日：{latest_date}"
+        f"対象日：{latest_date:%Y-%m-%d}"
     )
 
 else:
 
     message = (
         "📈 逆張りデイトレ候補\n"
-        f"対象日：{latest_date}\n"
-        f"該当：{len(result)}銘柄\n\n"
+        f"対象日：{latest_date:%Y-%m-%d}\n"
+        f"該当：{len(result)}銘柄\n"
+        "（バックテスト条件一致）\n\n"
     )
-
 
     for _, row in result.head(10).iterrows():
 
-        message += (
+    stars = "★" * min(5, int(row["Score"] // 20 + 1))
 
-            f"🔹 {row['Code']} {row['CoName']}\n"
-
-            f"株価：{row['AdjC']}円\n"
-
-            f"前日比：{row['ChangeRate']:.2f}%\n"
-
-            f"RSI：{row['RSI14']:.1f}\n"
-
-            f"BB下限比："
-            f"{row['AdjC']/row['BB_Lower']*100:.1f}%\n"
-
-            f"出来高：{int(row['AdjVo']):,}\n"
-
-            f"売買代金："
-            f"{int(row['TradingValue']/10000):,}万円\n\n"
-
-        )
-
-
+    message += (
+        f"{stars}  {row['Score']:.1f}点\n"
+        f"🔹{row['Code']} {row['CoName']}\n"
+        f"株価：{row['AdjC']:.1f}円\n"
+        f"前日比：{row['ChangeRate']:.2f}%\n"
+        f"RSI：{row['RSI14']:.1f}\n"
+        f"BB下限比：{row['BBRatio']:.1f}%\n"
+        f"出来高倍率：{row['VolRatio']:.2f}倍\n"
+        f"5日線乖離：{(row['AdjC']/row['MA5']-1)*100:.2f}%\n"
+        f"売買代金：{row['TradingValue']/100000000:.2f}億円\n\n"
+    )
+        
 # ==========================
 # Discord送信
 # ==========================

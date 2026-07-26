@@ -234,7 +234,7 @@ signal = df[
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI30以下
-    (df["RSI14"] <= 33) &
+    (df["RSI14"] <= 35) &
 
     # 当日陽線
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &

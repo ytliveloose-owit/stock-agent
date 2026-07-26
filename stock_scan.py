@@ -122,16 +122,6 @@ df["BB_Lower"] = (
     - df["BB_STD20"] * 2
 )
 
-target["VolRatio"] = (
-    target["AdjVo"] /
-    target["AvgVol5"]
-)
-
-target["BBRatio"] = (
-    target["AdjC"] /
-    target["BB_Lower"] * 100
-)
-
 # ==========================
 # 5日移動平均
 # ==========================
@@ -226,6 +216,20 @@ target = target.merge(
     prime,
     on="Code",
     how="inner"
+)
+
+# ==========================
+# 表示用
+# ==========================
+
+target["VolRatio"] = (
+    target["AdjVo"] /
+    target["AvgVol5"]
+)
+
+target["BBRatio"] = (
+    target["AdjC"] /
+    target["BB_Lower"] * 100
 )
 
 # ==========================
@@ -338,9 +342,12 @@ result = target[
 ]
 
 # ==========================
-# 下落率順
+# RSI降順
 # ==========================
-result = result.sort_values("ChangeRate")
+result = result.sort_values(
+    ["RSI14", "ChangeRate"],
+    ascending=[True, True]
+)
 
 # ==========================
 # Discord文章

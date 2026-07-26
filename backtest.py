@@ -219,7 +219,7 @@ signal = df[
 
     # 株価700～4000円
     (df["AdjC"] >= 700) &
-    (df["AdjC"] <= 4000) &
+    (df["AdjC"] <= 3000) &
 
     # 出来高10万株以上
     (df["AdjVo"] >= 100000) &
@@ -240,7 +240,7 @@ signal = df[
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
 
     # 5日線より下
-    (df["AdjC"] < df["MA5"]*0.99) 
+    (df["AdjC"] < df["MA5"]*0.995) 
 
 ].copy()
 

@@ -306,8 +306,8 @@ target = target.dropna(
 
 result = target[
 
-    # 前日比 -4～-2%
-    (target["ChangeRate"] >= -4) &
+    # 前日比 -6～-2%
+    (target["ChangeRate"] >= -6) &
     (target["ChangeRate"] <= -2) &
 
     # 株価700～3000円
@@ -326,7 +326,7 @@ result = target[
     # BB下限付近
     (target["AdjC"] <= target["BB_Lower"] * 1.01) &
 
-    # RSI32以下
+    # RSI33.5以下
     (target["RSI14"] <= 33.5) &
 
     # 当日陽線（1%以上）

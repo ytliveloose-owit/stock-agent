@@ -301,6 +301,10 @@ target = target[~noise_mask]
 # スクリーニング
 # ==========================
 
+result = result.dropna(
+    subset=["MA5", "BB_Lower", "RSI14"]
+)
+
 result = target[
 
     # 前日比 -4～-2%
@@ -342,7 +346,7 @@ result = target[
 ]
 
 # ==========================
-# RSI降順
+# RSI昇順
 # ==========================
 result = result.sort_values(
     ["RSI14", "ChangeRate"],

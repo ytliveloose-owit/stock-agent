@@ -214,7 +214,7 @@ df = df[~noise_mask]
 signal = df[
 
     # 前日比 -4～-2%
-    (df["ChangeRate"] >= -6) &
+    (df["ChangeRate"] >= -5) &
     (df["ChangeRate"] <= -2) &
 
     # 株価700～4000円

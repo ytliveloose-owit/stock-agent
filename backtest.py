@@ -231,7 +231,7 @@ signal = df[
     (df["AdjVo"] >= df["AvgVol5"] * 1.2) &
 
     # BB下限付近
-    (df["AdjC"] <= df["BB_Lower"] * 1.015) &
+    (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI30以下
     (df["RSI14"] <= 33.5) &

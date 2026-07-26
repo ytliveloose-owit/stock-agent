@@ -310,7 +310,7 @@ result = target[
     (target["AdjC"] <= target["BB_Lower"] * 1.01) &
 
     # RSI32以下
-    (target["RSI14"] <= 32) &
+    (target["RSI14"] <= 33.5) &
 
     # 当日陽線（1%以上）
     (

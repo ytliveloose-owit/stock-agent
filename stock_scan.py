@@ -122,6 +122,16 @@ df["BB_Lower"] = (
     - df["BB_STD20"] * 2
 )
 
+target["VolRatio"] = (
+    target["AdjVo"] /
+    target["AvgVol5"]
+)
+
+target["BBRatio"] = (
+    target["AdjC"] /
+    target["BB_Lower"] * 100
+)
+
 # ==========================
 # 5日移動平均
 # ==========================

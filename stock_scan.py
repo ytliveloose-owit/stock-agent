@@ -365,11 +365,13 @@ result = target[
 ]
 
 # ==========================
-# 下落率順
+# スコア順
 # ==========================
 
-result = result.sort_values("ChangeRate")
-
+result = result.sort_values(
+    ["Score", "ChangeRate"],
+    ascending=[False, True]
+)
 
 # ==========================
 # Discord文章
@@ -393,19 +395,19 @@ else:
 
     for _, row in result.head(10).iterrows():
 
-    stars = "★" * min(5, int(row["Score"] // 20 + 1))
+        stars = "★" * min(5, int(row["Score"] // 20 + 1))
 
-    message += (
-        f"{stars} {row['Score']:.1f}点\n"
-        f"🔹{row['Code']} {row['CoName']}\n"
-        f"株価：{row['AdjC']:.1f}円\n"
-        f"前日比：{row['ChangeRate']:.2f}%\n"
-        f"RSI：{row['RSI14']:.1f}\n"
-        f"BB下限比：{row['BBRatio']:.1f}%\n"
-        f"出来高倍率：{row['VolRatio']:.2f}倍\n"
-        f"5日線乖離：{(row['AdjC']/row['MA5']-1)*100:.2f}%\n"
-        f"売買代金：{row['TradingValue']/100000000:.2f}億円\n\n"
-    )
+        message += (
+            f"{stars} {row['Score']:.1f}点\n"
+            f"🔹 {row['Code']} {row['CoName']}\n"
+            f"株価：{row['AdjC']:.1f}円\n"
+            f"前日比：{row['ChangeRate']:.2f}%\n"
+            f"RSI：{row['RSI14']:.1f}\n"
+            f"BB下限比：{row['BBRatio']:.1f}%\n"
+            f"出来高倍率：{row['VolRatio']:.2f}倍\n"
+            f"5日線乖離：{(row['AdjC'] / row['MA5'] - 1) * 100:.2f}%\n"
+            f"売買代金：{row['TradingValue'] / 100000000:.2f}億円\n\n"
+        )
         
 # ==========================
 # Discord送信

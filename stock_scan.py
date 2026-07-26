@@ -396,7 +396,7 @@ else:
     stars = "★" * min(5, int(row["Score"] // 20 + 1))
 
     message += (
-        f"{stars}  {row['Score']:.1f}点\n"
+        f"{stars} {row['Score']:.1f}点\n"
         f"🔹{row['Code']} {row['CoName']}\n"
         f"株価：{row['AdjC']:.1f}円\n"
         f"前日比：{row['ChangeRate']:.2f}%\n"

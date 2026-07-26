@@ -284,43 +284,6 @@ noise_mask = (
 target = target[~noise_mask]
 
 # ==========================
-# スコア計算
-# ==========================
-
-# 出来高倍率
-target["VolRatio"] = target["AdjVo"] / target["AvgVol5"]
-
-# BB下限との距離（100%=BB下限）
-target["BBRatio"] = target["AdjC"] / target["BB_Lower"] * 100
-
-# RSI（低いほど高得点）
-target["Score_RSI"] = (35 - target["RSI14"]).clip(lower=0, upper=35)
-
-# BB下限に近いほど高得点
-target["Score_BB"] = (102 - target["BBRatio"]).clip(lower=0, upper=10) * 3
-
-# 出来高倍率
-target["Score_Vol"] = (
-    (target["VolRatio"] - 1.2)
-    .clip(lower=0, upper=2)
-    / 2
-    * 20
-)
-
-# 前日比（-3%が最高）
-target["Score_Drop"] = (
-    20
-    - (target["ChangeRate"] + 3).abs() * 20
-).clip(lower=0)
-
-target["Score"] = (
-    target["Score_RSI"]
-    + target["Score_BB"]
-    + target["Score_Vol"]
-    + target["Score_Drop"]
-)
-
-# ==========================
 # スクリーニング
 # ==========================
 
@@ -365,13 +328,9 @@ result = target[
 ]
 
 # ==========================
-# スコア順
+# 下落率順
 # ==========================
-
-result = result.sort_values(
-    ["Score", "ChangeRate"],
-    ascending=[False, True]
-)
+result = result.sort_values("ChangeRate")
 
 # ==========================
 # Discord文章
@@ -395,10 +354,7 @@ else:
 
     for _, row in result.head(10).iterrows():
 
-        stars = "★" * min(5, int(row["Score"] // 20 + 1))
-
         message += (
-            f"{stars} {row['Score']:.1f}点\n"
             f"🔹 {row['Code']} {row['CoName']}\n"
             f"株価：{row['AdjC']:.1f}円\n"
             f"前日比：{row['ChangeRate']:.2f}%\n"

@@ -214,7 +214,7 @@ df = df[~noise_mask]
 signal = df[
 
     # 前日比 -4～-2%
-    (df["ChangeRate"] >= -4.5) &
+    (df["ChangeRate"] >= -5) &
     (df["ChangeRate"] <= -2) &
 
     # 株価700～4000円
@@ -225,7 +225,7 @@ signal = df[
     (df["AdjVo"] >= 100000) &
 
     # 売買代金2億円以上
-    (df["TradingValue"] >= 200000000) &
+    (df["TradingValue"] >= 150000000) &
 
     # 出来高は5日平均の1.2倍以上
     (df["AdjVo"] >= df["AvgVol5"] * 1.2) &

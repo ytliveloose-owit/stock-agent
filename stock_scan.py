@@ -298,8 +298,9 @@ noise_mask = (
 target = target[~noise_mask]
 
 target = target.dropna(
-    subset=["MA5", "BB_Lower", "RSI14"]
+    subset=["MA5", "BB_Lower", "RSI14", "AvgVol5"]
 )
+
 # ==========================
 # スクリーニング
 # ==========================

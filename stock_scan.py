@@ -21,12 +21,12 @@ cli = jquantsapi.ClientV2()
 
 # ==========================
 # 取得期間
-# BB・RSI計算のため60日取得
+# BB・RSI計算のため40日取得
 # ==========================
 
 today = datetime.now()
 
-start_dt = today - timedelta(days=60)
+start_dt = today - timedelta(days=40)
 end_dt = today - timedelta(days=1)
 
 

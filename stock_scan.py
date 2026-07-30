@@ -234,6 +234,18 @@ target["BBRatio"] = (
 )
 
 # ==========================
+# 利確・損切り価格（終値基準）
+# ==========================
+
+target["TakeProfit"] = (
+    target["AdjC"] * 1.025
+)
+
+target["StopLoss"] = (
+    target["AdjC"] * 0.98
+)
+
+# ==========================
 # ノイズ判定
 # ==========================
 
@@ -376,16 +388,18 @@ else:
 
     for _, row in result.head(10).iterrows():
 
-        message += (
-            f"🔹 {row['Code']} {row['CoName']}\n"
-            f"株価：{row['AdjC']:.1f}円\n"
-            f"前日比：{row['ChangeRate']:.2f}%\n"
-            f"RSI：{row['RSI14']:.1f}\n"
-            f"BB下限比：{row['BBRatio']:.1f}%\n"
-            f"出来高倍率：{row['VolRatio']:.2f}倍\n"
-            f"5日線乖離：{(row['AdjC'] / row['MA5'] - 1) * 100:.2f}%\n"
-            f"売買代金：{row['TradingValue'] / 100000000:.2f}億円\n\n"
-        )
+       message += (
+    f"🔹 {row['Code']} {row['CoName']}\n"
+    f"株価：{row['AdjC']:.1f}円\n"
+    f"利確目安（終値基準）：{row['TakeProfit']:.1f}円\n"
+    f"損切目安（終値基準）：{row['StopLoss']:.1f}円\n"
+    f"前日比：{row['ChangeRate']:.2f}%\n"
+    f"RSI：{row['RSI14']:.1f}\n"
+    f"BB下限比：{row['BBRatio']:.1f}%\n"
+    f"出来高倍率：{row['VolRatio']:.2f}倍\n"
+    f"5日線乖離：{(row['AdjC'] / row['MA5'] - 1) * 100:.2f}%\n"
+    f"売買代金：{row['TradingValue'] / 100000000:.2f}億円\n\n"
+)
         
 # ==========================
 # Discord送信

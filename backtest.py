@@ -268,7 +268,7 @@ def intraday_return(row):
 
     # 利確
     if row["NextHigh"] >= tp:
-        return 3.0
+        return 2.5
 
     # 損切り
     if row["NextLow"] <= sl:

@@ -20,7 +20,7 @@ df = df.sort_values(
 # ==========================
 START_DATE = "2023-12-01"
 
-END_DATE   = "2026-6-30"
+END_DATE   = "2024-12-01"
 
 df = df[
 

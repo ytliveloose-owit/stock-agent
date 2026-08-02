@@ -215,7 +215,7 @@ signal = df[
 
     # 株価700～3000円
     (df["AdjC"] >= 700) &
-    (df["AdjC"] <= 4000) &
+    (df["AdjC"] <= 3000) &
 
     # 出来高10万株以上
     (df["AdjVo"] >= 100000) &
@@ -248,7 +248,7 @@ signal = df[
 entry = signal["NextOpen"]
 
 # 利確・損切りライン
-tp = entry * 1.03   # +2.5%
+tp = entry * 1.025   # +2.5%
 sl = entry * 0.98   # -2%
 
 # 判定
@@ -257,7 +257,7 @@ def intraday_return(row):
         return None
 
     entry = row["NextOpen"]
-    tp = entry * 1.03
+    tp = entry * 1.025
     sl = entry * 0.98
 
 # 両方到達した場合は保守的に損切り

@@ -259,12 +259,6 @@ target["BigMove"] = (
     target["ChangeRate"].abs() >= 10
 )
 
-# BBから離れすぎ
-target["BB_Anomaly"] = (
-    (target["AdjC"] >= target["BB_Lower"] * 1.05) |
-    (target["AdjC"] <= target["BB_Lower"] * 0.95)
-)
-
 # 配当落ちっぽい日
 target["DividendDrop"] = (
     (target["ChangeRate"] <= -3) &
@@ -300,7 +294,6 @@ noise_mask = (
 
     target["VolSpike"] |
     target["BigMove"] |
-    target["BB_Anomaly"] |
     target["DividendDrop"] |
     target["LimitUpDown"] |
     target["WhaleTrade"] |
@@ -324,9 +317,9 @@ result = target[
     (target["ChangeRate"] >= -6) &
     (target["ChangeRate"] <= -2) &
 
-    # 株価700～3000円
+    # 株価700～4000円
     (target["AdjC"] >= 700) &
-    (target["AdjC"] <= 3000) &
+    (target["AdjC"] <= 4000) &
 
     # 出来高10万株以上
     (target["AdjVo"] >= 100000) &
@@ -340,8 +333,8 @@ result = target[
     # BB下限付近
     (target["AdjC"] <= target["BB_Lower"] * 1.01) &
 
-    # RSI33.5以下
-    (target["RSI14"] <= 33.5) &
+    # RSI34以下
+    (target["RSI14"] <= 34) &
 
     # 当日陽線（1%以上）
     (
@@ -364,6 +357,32 @@ result = target[
 result = result.sort_values(
     ["RSI14", "ChangeRate"],
     ascending=[True, True]
+)
+
+# ==========================
+# 購入株数
+# ==========================
+
+result["Shares"] = 100
+
+result.loc[
+    result["AdjC"] < 1000,
+    "Shares"
+] = 300
+
+result.loc[
+    (result["AdjC"] >= 1000) &
+    (result["AdjC"] < 2000),
+    "Shares"
+] = 200
+
+# ==========================
+# 想定投資額
+# ==========================
+
+result["Investment"] = (
+    result["AdjC"] *
+    result["Shares"]
 )
 
 # ==========================
@@ -391,8 +410,10 @@ else:
        message += (
     f"🔹 {row['Code']} {row['CoName']}\n"
     f"株価：{row['AdjC']:.1f}円\n"
-    f"利確目安（終値基準）：{row['TakeProfit']:.1f}円\n"
-    f"損切目安（終値基準）：{row['StopLoss']:.1f}円\n"
+    f"購入株数：{int(row['Shares'])}株\n"
+    f"想定投資額：{row['Investment']:,.0f}円\n"
+    f"利確目安：{row['TakeProfit']:.1f}円\n"
+    f"損切目安：{row['StopLoss']:.1f}円\n"
     f"前日比：{row['ChangeRate']:.2f}%\n"
     f"RSI：{row['RSI14']:.1f}\n"
     f"BB下限比：{row['BBRatio']:.1f}%\n"

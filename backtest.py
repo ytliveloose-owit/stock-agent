@@ -215,7 +215,7 @@ signal = df[
 
     # 株価700～3000円
     (df["AdjC"] >= 700) &
-    (df["AdjC"] <= 3000) &
+    (df["AdjC"] <= 4000) &
 
     # 出来高10万株以上
     (df["AdjVo"] >= 100000) &
@@ -230,7 +230,7 @@ signal = df[
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI33.5以下
-    (df["PrevRSI"] <= 38) &
+    (df["PrevRSI"] <= 35) &
 
     # 当日陽線
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &

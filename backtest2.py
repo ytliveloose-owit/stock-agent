@@ -401,9 +401,8 @@ avg_loss = (
 
 profit_factor = (
     wins["ProfitYen"].sum()
-/
-abs(losses["ProfitYen"].sum()) /
-    abs(losses["Return"].sum())
+    /
+    abs(losses["ProfitYen"].sum())
     if loss_count > 0 else float("inf")
 )
 

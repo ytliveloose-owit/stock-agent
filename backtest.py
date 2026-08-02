@@ -280,13 +280,35 @@ def intraday_return(row):
 signal["Return"] = signal.apply(intraday_return, axis=1)
 
 # ==========================
-# 100株取引時の損益（円）
+# 株価ごとの購入株数
 # ==========================
 
-# エントリー金額（100株）
-signal["Investment"] = signal["NextOpen"] * 100
+signal["Shares"] = 100
 
-# 利益率から損益額を計算
+signal.loc[
+    signal["NextOpen"] < 1000,
+    "Shares"
+] = 300
+
+signal.loc[
+    (signal["NextOpen"] >= 1000) &
+    (signal["NextOpen"] < 2000),
+    "Shares"
+] = 200
+
+# ==========================
+# 投資金額
+# ==========================
+
+signal["Investment"] = (
+    signal["NextOpen"] *
+    signal["Shares"]
+)
+
+# ==========================
+# 損益（円）
+# ==========================
+
 signal["ProfitYen"] = (
     signal["Investment"] *
     signal["Return"] / 100
@@ -368,9 +390,8 @@ print(signal[
     [
         "Date",
         "Code",
-        "AdjC",
         "NextOpen",
-        "NextClose",
+        "Shares",
         "Return",
         "ProfitYen"
     ]

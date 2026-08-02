@@ -214,12 +214,12 @@ df = df[~noise_mask]
 signal = df[
 
     # 前日比 -6～-2%
-    (df["ChangeRate"] >= -7) &
-    (df["ChangeRate"] <= -1) &
+    (df["ChangeRate"] >= -6) &
+    (df["ChangeRate"] <= -2) &
 
     # 株価700～3000円
     (df["AdjC"] >= 700) &
-    (df["AdjC"] <= 3500) &
+    (df["AdjC"] <= 3000) &
 
     # 出来高10万株以上
     (df["AdjVo"] >= 100000) &

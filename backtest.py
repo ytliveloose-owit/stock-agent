@@ -214,8 +214,8 @@ df = df[~noise_mask]
 signal = df[
 
     # 前日比 -6～-2%
-    (df["ChangeRate"] >= -6) &
-    (df["ChangeRate"] <= -2) &
+    (df["ChangeRate"] >= -7) &
+    (df["ChangeRate"] <= -1) &
 
     # 株価700～3000円
     (df["AdjC"] >= 700) &
@@ -234,7 +234,7 @@ signal = df[
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI33.5以下
-    (df["RSI14"] <= 40) &
+    (df["RSI14"] <= 33.5) &
 
     # 当日陽線
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &

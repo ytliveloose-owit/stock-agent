@@ -278,6 +278,29 @@ def intraday_return(row):
 signal["Return"] = signal.apply(intraday_return, axis=1)
 
 # ==========================
+# 100株取引時の損益（円）
+# ==========================
+
+# エントリー金額（100株）
+signal["Investment"] = signal["NextOpen"] * 100
+
+# 利益率から損益額を計算
+signal["ProfitYen"] = (
+    signal["Investment"] *
+    signal["Return"] / 100
+).round()
+
+# 累計損益
+total_profit = signal["ProfitYen"].sum()
+
+# 平均損益
+avg_profit = signal["ProfitYen"].mean()
+
+# 最大利益・最大損失
+max_profit = signal["ProfitYen"].max()
+max_loss = signal["ProfitYen"].min()
+
+# ==========================
 # バックテスト結果
 # ==========================
 
@@ -331,6 +354,13 @@ print(f"最大損失      ：{signal['Return'].min():.2f}%")
 print(f"プロフィットファクター：{profit_factor:.2f}")
 
 print()
+print("=== 100株取引時 ===")
+print(f"累計損益      ：{total_profit:,.0f} 円")
+print(f"平均損益      ：{avg_profit:,.0f} 円")
+print(f"最大利益      ：{max_profit:,.0f} 円")
+print(f"最大損失      ：{max_loss:,.0f} 円")
+
+print()
 print("=== 上位20件 ===")
 print(signal[
     [
@@ -340,5 +370,6 @@ print(signal[
         "NextOpen",
         "NextClose",
         "Return"
+        "ProfitYen"
     ]
 ].head(20))

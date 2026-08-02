@@ -196,7 +196,6 @@ df["SplitMerge"] = (
 noise_mask = (
     df["VolSpike"] |
     df["BigMove"] |
-    df["BB_Anomaly"] |
     df["DividendDrop"] |
     df["LimitUpDown"] |
     df["WhaleTrade"] |

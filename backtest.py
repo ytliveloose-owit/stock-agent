@@ -248,7 +248,7 @@ signal = df[
 entry = signal["NextOpen"]
 
 # 利確・損切りライン
-tp = entry * 1.025   # +2.5%
+tp = entry * 1.03   # +2.5%
 sl = entry * 0.98   # -2%
 
 # 判定
@@ -257,7 +257,7 @@ def intraday_return(row):
         return None
 
     entry = row["NextOpen"]
-    tp = entry * 1.025
+    tp = entry * 1.03
     sl = entry * 0.98
 
 # 両方到達した場合は保守的に損切り
@@ -268,7 +268,7 @@ def intraday_return(row):
 
     # 利確
     if row["NextHigh"] >= tp:
-        return 2.5
+        return 3.0
 
     # 損切り
     if row["NextLow"] <= sl:

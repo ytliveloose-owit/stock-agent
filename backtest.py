@@ -369,7 +369,7 @@ print(signal[
         "AdjC",
         "NextOpen",
         "NextClose",
-        "Return"
+        "Return",
         "ProfitYen"
     ]
 ].head(20))

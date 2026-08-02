@@ -164,9 +164,6 @@ df["NextLow"]  = df.groupby("Code")["AdjL"].shift(-1)
 # --- 1. 決算日っぽい異常値動き ---
 df["VolSpike"] = df["AdjVo"] >= df["AvgVol5"] * 3        # 出来高3倍以上
 df["BigMove"] = (df["ChangeRate"].abs() >= 10)           # 前日比 ±10%以上
-df["BB_Anomaly"] = (
-    (df["AdjC"] >= df["BB_Lower"] * 1.05) |              # BB下限から5%以上上
-    (df["AdjC"] <= df["BB_Lower"] * 0.95)                # BB下限から5%以上下
 )
 
 # --- 2. 配当落ち日（権利落ち日） ---

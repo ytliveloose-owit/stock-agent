@@ -234,7 +234,7 @@ signal = df[
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI33.5以下
-    (df["RSI14"] <= 38) &
+    (df["RSI14"] <= 40) &
 
     # 当日陽線
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
@@ -253,7 +253,7 @@ entry = signal["NextOpen"]
 
 # 利確・損切りライン
 tp = entry * 1.025   # +2.5%
-sl = entry * 0.985   # -2%
+sl = entry * 0.98   # -2%
 
 # 判定
 def intraday_return(row):
@@ -262,7 +262,7 @@ def intraday_return(row):
 
     entry = row["NextOpen"]
     tp = entry * 1.025
-    sl = entry * 0.985
+    sl = entry * 0.98
 
     # 利確
     if row["NextHigh"] >= tp:
@@ -270,7 +270,7 @@ def intraday_return(row):
 
     # 損切り
     if row["NextLow"] <= sl:
-        return -1.5
+        return -2.0
 
     # どちらも到達しない → 終値で決済
     return (row["NextClose"] - entry) / entry * 100

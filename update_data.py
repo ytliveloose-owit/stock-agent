@@ -41,6 +41,19 @@ df = cli.get_eq_bars_daily_range(
     end_dt=end_dt
 )
 
+# 必要列のみ
+df = df[
+    [
+        "Date",
+        "Code",
+        "AdjO",
+        "AdjH",
+        "AdjL",
+        "AdjC",
+        "AdjVo",
+    ]
+]
+
 df = df.sort_values(
     ["Code", "Date"]
 )

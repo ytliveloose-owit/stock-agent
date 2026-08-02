@@ -230,7 +230,7 @@ signal = df[
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
     # RSI33.5以下
-    (df["PrevRSI"] <= 35) &
+    (df["PrevRSI"] <= 33.5) &
 
     # 当日陽線
     ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
@@ -272,7 +272,7 @@ def intraday_return(row):
 
     # 損切り
     if row["NextLow"] <= sl:
-        return -1.8
+        return -2.0
 
     # どちらも到達しない → 終値で決済
     return (row["NextClose"] - entry) / entry * 100

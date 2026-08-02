@@ -149,13 +149,21 @@ df["PrevRSI"] = (
 )
 
 # ==========================
-# 翌日の株価
+# 翌日・翌々日の株価
 # ==========================
 
-df["NextOpen"] = df.groupby("Code")["AdjO"].shift(-1)
-df["NextClose"] = df.groupby("Code")["AdjC"].shift(-1)
-df["NextHigh"] = df.groupby("Code")["AdjH"].shift(-1)
-df["NextLow"]  = df.groupby("Code")["AdjL"].shift(-1)
+g = df.groupby("Code")
+
+# 翌日
+df["NextOpen"] = g["AdjO"].shift(-1)
+df["NextClose"] = g["AdjC"].shift(-1)
+df["NextHigh"] = g["AdjH"].shift(-1)
+df["NextLow"] = g["AdjL"].shift(-1)
+
+# 翌々日
+df["Next2Close"] = g["AdjC"].shift(-2)
+df["Next2High"] = g["AdjH"].shift(-2)
+df["Next2Low"] = g["AdjL"].shift(-2)
 
 # ==========================
 # ノイズ除外（完全版）
@@ -252,18 +260,24 @@ tp = entry * 1.025   # +2.5%
 sl = entry * 0.98   # -2%
 
 # 判定
-def intraday_return(row):
-    if pd.isna(row["NextHigh"]) or pd.isna(row["NextLow"]):
+def holding_return(row):
+
+    if pd.isna(row["NextOpen"]):
         return None
 
+
     entry = row["NextOpen"]
+
     tp = entry * 1.025
     sl = entry * 0.98
 
-# 両方到達した場合は保守的に損切り
 
+    # ======================
+    # 1日目
+    # ======================
+
+    # 両方到達
     if row["NextLow"] <= sl and row["NextHigh"] >= tp:
-
         return -2.0
 
     # 利確
@@ -274,10 +288,40 @@ def intraday_return(row):
     if row["NextLow"] <= sl:
         return -2.0
 
-    # どちらも到達しない → 終値で決済
-    return (row["NextClose"] - entry) / entry * 100
 
-signal["Return"] = signal.apply(intraday_return, axis=1)
+
+    # ======================
+    # 2日目
+    # ======================
+
+    if pd.isna(row["Next2Close"]):
+        return None
+
+
+    # 両方到達
+    if row["Next2Low"] <= sl and row["Next2High"] >= tp:
+        return -2.0
+
+    # 利確
+    if row["Next2High"] >= tp:
+        return 2.5
+
+    # 損切り
+    if row["Next2Low"] <= sl:
+        return -2.0
+
+
+
+    # ======================
+    # 2日保有して決済
+    # ======================
+
+    return (
+        (row["Next2Close"] - entry)
+        / entry * 100
+    )
+
+signal["Return"] = signal.apply(holding_return, axis=1)
 
 # ==========================
 # 株価ごとの購入株数
@@ -356,7 +400,9 @@ avg_loss = (
 )
 
 profit_factor = (
-    wins["Return"].sum() /
+    wins["ProfitYen"].sum()
+/
+abs(losses["ProfitYen"].sum()) /
     abs(losses["Return"].sum())
     if loss_count > 0 else float("inf")
 )
@@ -378,7 +424,7 @@ print(f"最大損失      ：{signal['Return'].min():.2f}%")
 print(f"プロフィットファクター：{profit_factor:.2f}")
 
 print()
-print("=== 100株取引時 ===")
+print("=== 株価別購入数考慮 ===")
 print(f"累計損益      ：{total_profit:,.0f} 円")
 print(f"平均損益      ：{avg_profit:,.0f} 円")
 print(f"最大利益      ：{max_profit:,.0f} 円")

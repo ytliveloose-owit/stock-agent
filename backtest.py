@@ -229,7 +229,7 @@ signal = df[
     # BB下限付近
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
-    # RSI33.5以下
+    # RSI34以下
     (df["PrevRSI"] <= 34) &
 
     # 当日陽線
@@ -283,18 +283,18 @@ signal["Return"] = signal.apply(intraday_return, axis=1)
 # 株価ごとの購入株数
 # ==========================
 
-signal["Shares"] = 100
+signal["Shares"] = 200
 
 signal.loc[
     signal["NextOpen"] < 1000,
     "Shares"
-] = 300
+] = 800
 
 signal.loc[
     (signal["NextOpen"] >= 1000) &
     (signal["NextOpen"] < 2000),
     "Shares"
-] = 200
+] = 400
 
 # ==========================
 # 投資金額

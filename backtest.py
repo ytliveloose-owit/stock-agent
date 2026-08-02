@@ -378,7 +378,7 @@ print(f"最大損失      ：{signal['Return'].min():.2f}%")
 print(f"プロフィットファクター：{profit_factor:.2f}")
 
 print()
-print("=== 100株取引時 ===")
+print("=== 株価別購入数考慮 ===")
 print(f"累計損益      ：{total_profit:,.0f} 円")
 print(f"平均損益      ：{avg_profit:,.0f} 円")
 print(f"最大利益      ：{max_profit:,.0f} 円")

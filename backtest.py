@@ -1,47 +1,126 @@
 import pandas as pd
+import os
 
-# ==========================
-# CSV読込
-# ==========================
 
-df = pd.read_csv(
-    "daily_data.csv",
-    dtype={"Code": str}
+# ==========================================================
+# バックテスト対象期間
+# ==========================================================
+
+START_DATE = "2022-04-01"
+END_DATE   = "2024-07-31"
+
+
+# ==========================================================
+# CSV読み込み
+# 年別CSVを自動で読み込む
+# ==========================================================
+
+start_year = pd.to_datetime(START_DATE).year
+end_year = pd.to_datetime(END_DATE).year
+
+csv_files = [
+    f"daily_data_{year}.csv"
+    for year in range(start_year - 1, end_year + 1)
+]
+
+
+print("=" * 40)
+print("CSV読み込み")
+print("=" * 40)
+
+print("読み込むファイル：")
+
+
+data_list = []
+
+for csv_file in csv_files:
+
+    if os.path.exists(csv_file):
+
+        print(f"  ✓ {csv_file}")
+
+        temp = pd.read_csv(
+            csv_file,
+            dtype={"Code": str}
+        )
+
+        data_list.append(temp)
+
+    else:
+
+        print(f"  × {csv_file} が見つかりません")
+
+
+if not data_list:
+
+    raise FileNotFoundError(
+        "読み込めるdaily_data_YYYY.csvがありません。"
+    )
+
+
+# ==========================================================
+# CSV結合
+# ==========================================================
+
+df = pd.concat(
+    data_list,
+    ignore_index=True
 )
 
-df["Date"] = pd.to_datetime(df["Date"])
+
+# ==========================================================
+# Date型統一
+# ==========================================================
+
+df["Date"] = pd.to_datetime(
+    df["Date"],
+    format="mixed"
+)
+
+
+# ==========================================================
+# Code型統一
+# ==========================================================
+
+df["Code"] = df["Code"].astype(str)
+
+
+# ==========================================================
+# 並び替え
+# ==========================================================
 
 df = df.sort_values(
     ["Code", "Date"]
+).reset_index(drop=True)
+
+
+print()
+print(
+    f"読み込み件数：{len(df):,}件"
 )
 
-# ==========================
+
+# ==========================================================
 # バックテスト対象期間
-# ==========================
-START_DATE = "2022-4-01"
+#
+# ※ 指標計算に必要な過去データを残すため、
+#    ここではまだ期間を絞らない
+# ==========================================================
 
-END_DATE   = "2024-7-31"
 
-df = df[
-
-    (df["Date"] >= START_DATE) &
-
-    (df["Date"] <= END_DATE)
-
-].copy()
-
-# ==========================
+# ==========================================================
 # 前日終値
-# ==========================
+# ==========================================================
 
 df["PrevClose"] = (
     df.groupby("Code")["AdjC"]
     .shift(1)
 )
 
-# ==========================
+
+# ==========================================================
 # 前日比
-# ==========================
+# ==========================================================
 
 df["ChangeRate"] = (
     (df["AdjC"] - df["PrevClose"])
@@ -49,85 +128,115 @@ df["ChangeRate"] = (
     * 100
 )
 
-# ==========================
+
+# ==========================================================
 # 5日平均出来高
-# ==========================
+# ==========================================================
 
 df["AvgVol5"] = (
     df.groupby("Code")["AdjVo"]
     .transform(
-        lambda x: x.shift(1).rolling(5).mean()
+        lambda x:
+        x.shift(1)
+        .rolling(5)
+        .mean()
     )
 )
 
-# ==========================
+
+# ==========================================================
 # 売買代金
-# ==========================
+# ==========================================================
 
 df["TradingValue"] = (
     df["AdjC"] * df["AdjVo"]
 )
 
-# ==========================
+
+# ==========================================================
 # ボリンジャーバンド
-# ==========================
+# ==========================================================
 
 df["BB_MA20"] = (
     df.groupby("Code")["AdjC"]
     .transform(
-        lambda x: x.shift(1).rolling(20).mean()
+        lambda x:
+        x.shift(1)
+        .rolling(20)
+        .mean()
     )
 )
+
 
 df["BB_STD20"] = (
     df.groupby("Code")["AdjC"]
     .transform(
-        lambda x: x.shift(1).rolling(20).std()
+        lambda x:
+        x.shift(1)
+        .rolling(20)
+        .std()
     )
 )
+
 
 df["BB_Lower"] = (
     df["BB_MA20"]
     - 2 * df["BB_STD20"]
 )
 
-# ==========================
+
+# ==========================================================
 # RSI
-# ==========================
+# ==========================================================
 
 def calc_rsi(series, period=14):
 
     delta = series.diff()
 
-    gain = delta.where(delta > 0, 0)
+    gain = delta.where(
+        delta > 0,
+        0
+    )
 
-    loss = -delta.where(delta < 0, 0)
+    loss = -delta.where(
+        delta < 0,
+        0
+    )
 
-    avg_gain = gain.rolling(period).mean()
+    avg_gain = gain.rolling(
+        period
+    ).mean()
 
-    avg_loss = loss.rolling(period).mean()
+    avg_loss = loss.rolling(
+        period
+    ).mean()
 
     rs = avg_gain / avg_loss
 
-    return 100 - (100 / (1 + rs))
+    return 100 - (
+        100 / (1 + rs)
+    )
+
 
 df["RSI14"] = (
     df.groupby("Code")["AdjC"]
     .transform(calc_rsi)
 )
 
-# ==========================
+
+# ==========================================================
 # 前日始値
-# ==========================
+# ==========================================================
 
 df["PrevOpen"] = (
     df.groupby("Code")["AdjO"]
     .shift(1)
 )
 
-# ==========================
+
+# ==========================================================
 # 5日移動平均
-# ==========================
+# ==========================================================
 
 df["MA5"] = (
     df.groupby("Code")["AdjC"]
@@ -139,60 +248,115 @@ df["MA5"] = (
     )
 )
 
-# ==========================
+
+# ==========================================================
 # 前日RSI
-# ==========================
+# ==========================================================
 
 df["PrevRSI"] = (
     df.groupby("Code")["RSI14"]
     .shift(1)
 )
 
-# ==========================
+
+# ==========================================================
 # 翌日の株価
-# ==========================
+# ==========================================================
 
-df["NextOpen"] = df.groupby("Code")["AdjO"].shift(-1)
-df["NextClose"] = df.groupby("Code")["AdjC"].shift(-1)
-df["NextHigh"] = df.groupby("Code")["AdjH"].shift(-1)
-df["NextLow"]  = df.groupby("Code")["AdjL"].shift(-1)
+df["NextOpen"] = (
+    df.groupby("Code")["AdjO"]
+    .shift(-1)
+)
 
-# ==========================
-# ノイズ除外（完全版）
-# ==========================
+df["NextClose"] = (
+    df.groupby("Code")["AdjC"]
+    .shift(-1)
+)
+
+df["NextHigh"] = (
+    df.groupby("Code")["AdjH"]
+    .shift(-1)
+)
+
+df["NextLow"] = (
+    df.groupby("Code")["AdjL"]
+    .shift(-1)
+)
+
+
+# ==========================================================
+# バックテスト期間に絞る
+#
+# 指標計算後に期間を絞るのがポイント
+# ==========================================================
+
+df = df[
+    (df["Date"] >= START_DATE) &
+    (df["Date"] <= END_DATE)
+].copy()
+
+
+print(
+    f"バックテスト対象件数：{len(df):,}件"
+)
+
+
+# ==========================================================
+# ノイズ除外
+# ==========================================================
+
 
 # --- 1. 決算日っぽい異常値動き ---
-df["VolSpike"] = df["AdjVo"] >= df["AvgVol5"] * 3        # 出来高3倍以上
-df["BigMove"] = (df["ChangeRate"].abs() >= 10)           # 前日比 ±10%以上
+
+df["VolSpike"] = (
+    df["AdjVo"]
+    >= df["AvgVol5"] * 3
+)
+
+df["BigMove"] = (
+    df["ChangeRate"].abs() >= 10
+)
 
 
-# --- 2. 配当落ち日（権利落ち日） ---
-# 配当落ちは「必ず下がる」ため逆張りのノイズ
+# --- 2. 配当落ち日 ---
+
 df["DividendDrop"] = (
     (df["ChangeRate"] <= -3) &
-    (df["AdjVo"] <= df["AvgVol5"] * 1.2)                 # 出来高は増えないことが多い
+    (df["AdjVo"] <= df["AvgVol5"] * 1.2)
 )
 
-# --- 3. ストップ高・ストップ安の翌日 ---
+
+# --- 3. ストップ高・ストップ安 ---
+
 df["LimitUpDown"] = (
     (df["PrevClose"] > 0) &
-    ((df["AdjC"] >= df["PrevClose"] * 1.2) |             # ストップ高翌日
-     (df["AdjC"] <= df["PrevClose"] * 0.8))              # ストップ安翌日
+    (
+        (df["AdjC"] >= df["PrevClose"] * 1.2) |
+        (df["AdjC"] <= df["PrevClose"] * 0.8)
+    )
 )
+
 
 # --- 4. 大口売買による異常値動き ---
+
 df["WhaleTrade"] = (
-    (df["AdjVo"] >= df["AvgVol5"] * 5) |                 # 出来高5倍以上
-    (df["ChangeRate"].abs() >= 8)                        # ±8%以上の急変
+    (df["AdjVo"] >= df["AvgVol5"] * 5) |
+    (df["ChangeRate"].abs() >= 8)
 )
 
-# --- 5. 株式分割・併合などのイベント日（値動きから判定） ---
+
+# --- 5. 株式分割・併合など ---
+
 df["SplitMerge"] = (
-    (df["AdjC"] <= df["PrevClose"] * 0.5) |              # 併合で急落
-    (df["AdjC"] >= df["PrevClose"] * 1.5)                # 分割で急騰
+    (df["AdjC"] <= df["PrevClose"] * 0.5) |
+    (df["AdjC"] >= df["PrevClose"] * 1.5)
 )
 
-# --- すべてのノイズをまとめて除外 ---
+
+# ==========================================================
+# ノイズをまとめて除外
+# ==========================================================
+
 noise_mask = (
     df["VolSpike"] |
     df["BigMove"] |
@@ -202,18 +366,23 @@ noise_mask = (
     df["SplitMerge"]
 )
 
-df = df[~noise_mask]
 
-# ==========================
-# 買いシグナル抽出条件
-# ==========================
+df = df[
+    ~noise_mask
+]
+
+
+# ==========================================================
+# 買いシグナル抽出
+# ==========================================================
+
 signal = df[
 
     # 前日比 -6～-2%
     (df["ChangeRate"] >= -6) &
     (df["ChangeRate"] <= -2) &
 
-    # 株価700～3000円
+    # 株価700～4000円
     (df["AdjC"] >= 700) &
     (df["AdjC"] <= 4000) &
 
@@ -229,66 +398,108 @@ signal = df[
     # BB下限付近
     (df["AdjC"] <= df["BB_Lower"] * 1.01) &
 
-    # RSI33.5以下
+    # 前日RSI34以下
     (df["PrevRSI"] <= 34) &
 
     # 当日陽線
-    ((df["AdjC"] - df["AdjO"]) / df["AdjO"] >= 0.01) &
+    (
+        (df["AdjC"] - df["AdjO"])
+        / df["AdjO"]
+        >= 0.01
+    ) &
 
-    # 5日線より下
-    (df["AdjC"] < df["MA5"]*0.99) 
+    # 5日線より1%以上下
+    (
+        df["AdjC"]
+        < df["MA5"] * 0.99
+    )
 
 ].copy()
 
-# ==========================
-# 利確・損切り判定（デイトレ）
-# ==========================
 
-# エントリー価格
-entry = signal["NextOpen"]
+# ==========================================================
+# 利確・損切り判定
+# ==========================================================
 
-# 利確・損切りライン
-tp = entry * 1.025   # +2.5%
-sl = entry * 0.98   # -2%
-
-# 判定
 def intraday_return(row):
-    if pd.isna(row["NextHigh"]) or pd.isna(row["NextLow"]):
+
+    if (
+        pd.isna(row["NextOpen"]) or
+        pd.isna(row["NextHigh"]) or
+        pd.isna(row["NextLow"]) or
+        pd.isna(row["NextClose"])
+    ):
         return None
 
+
     entry = row["NextOpen"]
+
     tp = entry * 1.025
+
     sl = entry * 0.98
 
-# 両方到達した場合は保守的に損切り
 
-    if row["NextLow"] <= sl and row["NextHigh"] >= tp:
-
+    # 両方到達した場合
+    # 保守的に損切り
+    if (
+        row["NextLow"] <= sl and
+        row["NextHigh"] >= tp
+    ):
         return -2.0
+
 
     # 利確
     if row["NextHigh"] >= tp:
+
         return 2.5
+
 
     # 損切り
     if row["NextLow"] <= sl:
+
         return -2.0
 
-    # どちらも到達しない → 終値で決済
-    return (row["NextClose"] - entry) / entry * 100
 
-signal["Return"] = signal.apply(intraday_return, axis=1)
+    # どちらも到達しない
+    # 終値決済
+    return (
+        (row["NextClose"] - entry)
+        / entry
+        * 100
+    )
 
-# ==========================
+
+signal["Return"] = (
+    signal.apply(
+        intraday_return,
+        axis=1
+    )
+)
+
+
+# ==========================================================
+# 翌日のデータがない行を除外
+# ==========================================================
+
+signal = signal.dropna(
+    subset=[
+        "Return"
+    ]
+).copy()
+
+
+# ==========================================================
 # 株価ごとの購入株数
-# ==========================
+# ==========================================================
 
 signal["Shares"] = 200
+
 
 signal.loc[
     signal["NextOpen"] < 1000,
     "Shares"
 ] = 800
+
 
 signal.loc[
     (signal["NextOpen"] >= 1000) &
@@ -296,103 +507,210 @@ signal.loc[
     "Shares"
 ] = 400
 
-# ==========================
+
+# ==========================================================
 # 投資金額
-# ==========================
+# ==========================================================
 
 signal["Investment"] = (
     signal["NextOpen"] *
     signal["Shares"]
 )
 
-# ==========================
+
+# ==========================================================
 # 損益（円）
-# ==========================
+# ==========================================================
 
 signal["ProfitYen"] = (
     signal["Investment"] *
-    signal["Return"] / 100
+    signal["Return"]
+    / 100
 ).round()
 
-# 累計損益
-total_profit = signal["ProfitYen"].sum()
 
-# 平均損益
-avg_profit = signal["ProfitYen"].mean()
+# ==========================================================
+# 勝ち・負け
+# ==========================================================
 
-# 最大利益・最大損失
-max_profit = signal["ProfitYen"].max()
-max_loss = signal["ProfitYen"].min()
+wins = signal[
+    signal["Return"] > 0
+]
 
-# ==========================
-# バックテスト結果
-# ==========================
+losses = signal[
+    signal["Return"] <= 0
+]
 
-# 翌日のデータがない行を除外
-signal = signal.dropna(subset=["Return"])
 
-wins = signal[signal["Return"] > 0]
-losses = signal[signal["Return"] <= 0]
+# ==========================================================
+# 基本統計
+# ==========================================================
 
 trade_count = len(signal)
+
 win_count = len(wins)
+
 loss_count = len(losses)
 
+
 win_rate = (
-    win_count / trade_count * 100
-    if trade_count > 0 else 0
+    win_count
+    / trade_count
+    * 100
+    if trade_count > 0
+    else 0
 )
 
-avg_return = signal["Return"].mean()
+
+avg_return = (
+    signal["Return"].mean()
+    if trade_count > 0
+    else 0
+)
+
 
 avg_win = (
     wins["Return"].mean()
-    if win_count > 0 else 0
+    if win_count > 0
+    else 0
 )
+
 
 avg_loss = (
     losses["Return"].mean()
-    if loss_count > 0 else 0
+    if loss_count > 0
+    else 0
 )
+
+
+# ==========================================================
+# プロフィットファクター
+# ==========================================================
 
 profit_factor = (
-    wins["Return"].sum() /
-    abs(losses["Return"].sum())
-    if loss_count > 0 else float("inf")
+    wins["Return"].sum()
+    / abs(losses["Return"].sum())
+    if loss_count > 0
+    else float("inf")
 )
 
-print("=" * 40)
-print("バックテスト結果")
-print("=" * 40)
-print(f"対象期間      ：{START_DATE} ～ {END_DATE}")
 
-print(f"取引回数      ：{trade_count}")
-print(f"勝ち          ：{win_count}")
-print(f"負け          ：{loss_count}")
-print(f"勝率          ：{win_rate:.2f}%")
-print(f"平均利益率    ：{avg_return:.2f}%")
-print(f"平均勝ち      ：{avg_win:.2f}%")
-print(f"平均負け      ：{avg_loss:.2f}%")
-print(f"最大利益      ：{signal['Return'].max():.2f}%")
-print(f"最大損失      ：{signal['Return'].min():.2f}%")
-print(f"プロフィットファクター：{profit_factor:.2f}")
+# ==========================================================
+# 円ベース集計
+# ==========================================================
+
+total_profit = (
+    signal["ProfitYen"].sum()
+)
+
+
+avg_profit = (
+    signal["ProfitYen"].mean()
+)
+
+
+max_profit = (
+    signal["ProfitYen"].max()
+)
+
+
+max_loss = (
+    signal["ProfitYen"].min()
+)
+
+
+# ==========================================================
+# バックテスト結果
+# ==========================================================
+
+print()
+print("=" * 50)
+print("バックテスト結果")
+print("=" * 50)
+
+print(
+    f"対象期間      ：{START_DATE} ～ {END_DATE}"
+)
+
+print(
+    f"取引回数      ：{trade_count}"
+)
+
+print(
+    f"勝ち          ：{win_count}"
+)
+
+print(
+    f"負け          ：{loss_count}"
+)
+
+print(
+    f"勝率          ：{win_rate:.2f}%"
+)
+
+print(
+    f"平均利益率    ：{avg_return:.2f}%"
+)
+
+print(
+    f"平均勝ち      ：{avg_win:.2f}%"
+)
+
+print(
+    f"平均負け      ：{avg_loss:.2f}%"
+)
+
+print(
+    f"最大利益      ：{signal['Return'].max():.2f}%"
+)
+
+print(
+    f"最大損失      ：{signal['Return'].min():.2f}%"
+)
+
+print(
+    f"プロフィットファクター：{profit_factor:.2f}"
+)
+
 
 print()
 print("=== 株価別購入数考慮 ===")
-print(f"累計損益      ：{total_profit:,.0f} 円")
-print(f"平均損益      ：{avg_profit:,.0f} 円")
-print(f"最大利益      ：{max_profit:,.0f} 円")
-print(f"最大損失      ：{max_loss:,.0f} 円")
+
+
+print(
+    f"累計損益      ：{total_profit:,.0f} 円"
+)
+
+print(
+    f"平均損益      ：{avg_profit:,.0f} 円"
+)
+
+print(
+    f"最大利益      ：{max_profit:,.0f} 円"
+)
+
+print(
+    f"最大損失      ：{max_loss:,.0f} 円"
+)
+
+
+# ==========================================================
+# 上位20件
+# ==========================================================
 
 print()
 print("=== 上位20件 ===")
-print(signal[
-    [
-        "Date",
-        "Code",
-        "NextOpen",
-        "Shares",
-        "Return",
-        "ProfitYen"
-    ]
-].head(20))
+
+
+print(
+    signal[
+        [
+            "Date",
+            "Code",
+            "NextOpen",
+            "Shares",
+            "Return",
+            "ProfitYen"
+        ]
+    ].head(20)
+)

@@ -3,37 +3,90 @@ name: Update Daily Data
 on:
   workflow_dispatch:
 
+# GitHub Actionsからリポジトリへpushする権限
 permissions:
   contents: write
 
 jobs:
+
   run:
 
     runs-on: ubuntu-latest
 
     steps:
 
-      - uses: actions/checkout@v4
+      # ==========================
+      # リポジトリ取得
+      # ==========================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      # ==========================
+      # Python
+      # ==========================
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+      # ==========================
+      # 必要ライブラリ
+      # ==========================
       - name: Install packages
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # ==========================
+      # 株価データ取得
+      # ==========================
       - name: Update data
         env:
           JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
-        run: python update_data.py
-
-      - name: Commit CSV
         run: |
-         git config user.name "github-actions"
-         git config user.email "github-actions@github.com"
-         git add daily_data.csv
-         git diff --cached --quiet || git commit -m "Update daily_data.csv"
-         git pull --rebase origin main
-         git push origin main
+          python update_data.py
+
+      # ==========================
+      # 作成されたCSVを確認
+      # ==========================
+      - name: Check CSV
+        run: |
+          echo "作成されたCSV:"
+          ls -lh daily_data_*.csv
+
+      # ==========================
+      # Git設定
+      # ==========================
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # ==========================
+      # CSVをGitHubへ保存
+      # ==========================
+      - name: Commit and push CSV
+        run: |
+
+          # 年別CSVをGitに追加
+          git add daily_data_*.csv
+
+          # CSVに変更があるか確認
+          if git diff --cached --quiet; then
+
+            echo "CSVに変更がないため、commit・pushしません。"
+
+          else
+
+            # commit
+            git commit -m "Update daily stock data"
+
+            # 最新状態を取得
+            git pull --rebase origin main
+
+            # GitHubへpush
+            git push origin main
+
+          fi
